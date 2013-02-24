@@ -21,7 +21,7 @@
       "zhparser": {
          "abstract": "a parser for full-text search of Chinese",
          "file": "zhparser--1.0.sql",
-         "docfile": "README.md
+         "docfile": "README.md",
          "version": "0.1.0"
       }
    },
