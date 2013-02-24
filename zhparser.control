@@ -1,0 +1,4 @@
+comment = 'a parser for full-text search of Chinese'
+default_version = '1.0'
+module_pathname = '$libdir/zhparser'
+relocatable = true
