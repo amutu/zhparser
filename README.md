@@ -1,15 +1,16 @@
 Zhparser
 ========
 
-Zhparser is a PostgreSQL extension for full-text search of Chinese.It it implement a Chinese parser base the Simple Chinese Word Segmentation(SCWS).
+Zhparser is a PostgreSQL extension for full-text search of Chinese.It it implement a Chinese parser base on 
+the Simple Chinese Word Segmentation(SCWS).
 
 [INSTALL]
-wget -q -O - http://www.xunsearch.com/scws/down/scws-1.2.1.tar.bz2 | tar xjf -
-cd scws-1.2.1 ; ./configure ; make install
-git clone https://github.com/amutu-code/zhparser.git
-cd zhparser
-wget -q -O - http://www.xunsearch.com/scws/down/scws-dict-chs-utf8.tar.bz2 | tar xjf -
-SCWS_HOME=/usr/local make && make install
+ wget -q -O - http://www.xunsearch.com/scws/down/scws-1.2.1.tar.bz2 | tar xjf -
+ cd scws-1.2.1 ; ./configure ; make install
+ git clone https://github.com/amutu-code/zhparser.git
+ cd zhparser
+ wget -q -O - http://www.xunsearch.com/scws/down/scws-dict-chs-utf8.tar.bz2 | tar xjf -
+ SCWS_HOME=/usr/local make && make install
 
 [EXAMPLE]
 CREATE EXTENSION zhparser;
