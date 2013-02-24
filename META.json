@@ -40,11 +40,11 @@
       "version": "1.0.0",
       "url": "http://pgxn.org/meta/spec.txt"
    },
+   "release_status": "testing",
    "tags": [
       "parser",
       "full text search",
       "Chinese",
       "dictionary",
    ]
-   "release_status": "testing"
 }
