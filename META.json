@@ -1,0 +1,50 @@
+{
+   "name": "zhparser",
+   "abstract": "a parser for full-text search of Chinese",
+   "description": "Zhparser is a PostgreSQL extension for full-text search of Chinese.It implements a Chinese parser base on the Simple Chinese Word Segmentation(SCWS)",
+   "version": "0.1.0",
+   "maintainer": [
+      "Jov <amutu@amutu.com>"
+   ],
+   "license": "postgresql",
+   "prereqs": {
+      "runtime": {
+         "requires": {
+            "PostgreSQL": "9.1.0"
+         },
+         "recommends": {
+            "PostgreSQL": "9.2.0"
+         }
+      }
+   },
+   "provides": {
+      "zhparser": {
+         "abstract": "a parser for full-text search of Chinese",
+         "file": "zhparser--1.0.sql",
+         "docfile": "README.md
+         "version": "0.1.0"
+      }
+   },
+   "resources": {
+      "bugtracker": {
+         "web": "http://github.com/amutu/zhparser/issues/"
+      },
+      "repository": {
+        "url":  "git://github.com/amutu/zhparser.git",
+        "web":  "http://github.com/amutu/zhparser/",
+        "type": "git"
+      }
+   },
+   "generated_by": "Jov",
+   "meta-spec": {
+      "version": "1.0.0",
+      "url": "http://pgxn.org/meta/spec.txt"
+   },
+   "tags": [
+      "parser",
+      "full text search",
+      "Chinese",
+      "dictionary",
+   ]
+   "release_status": "testing"
+}
