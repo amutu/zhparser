@@ -10,7 +10,7 @@ the Simple Chinese Word Segmentation(SCWS).
  
  cd scws-1.2.1 ; ./configure ; make install
  
- git clone https://github.com/amutu-code/zhparser.git
+ git clone https://github.com/amutu/zhparser.git
  
  cd zhparser
  
