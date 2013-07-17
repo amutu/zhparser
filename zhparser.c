@@ -5,7 +5,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "scws.h"
+#include "zhparser.h"
 
 #include "postgres.h"
 #include "miscadmin.h"
