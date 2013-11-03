@@ -28,6 +28,7 @@ INSTALL
  SCWS_HOME=/usr/local make && make install
 
 ```
+注意:在*BSD上编译安装时，使用gmake代替make
 4.创建extension
 
 ```
