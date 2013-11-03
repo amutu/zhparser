@@ -11,9 +11,9 @@ INSTALL
 1.安装SCWS
 
 ```
- wget -q -O - http://www.xunsearch.com/scws/down/scws-1.2.1.tar.bz2 | tar xjf -
+ wget -q -O - https://github.com/hightman/scws/archive/1.2.2.tar.gz | tar xzf -
 
- cd scws-1.2.1 ; ./configure ; make install
+ cd scws-1.2.2 ; ./configure ; make install
 
 ```
 2.下载zhparser源码

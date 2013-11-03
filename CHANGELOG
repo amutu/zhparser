@@ -1,3 +1,9 @@
+0.1.3 （2013-11-03）
+-- resolve the compile warning for pstrdup
+-- add the Chinese dict for SCWS
+-- update instal doc to note use gmake for *BSD
+-- update install doc to download SCWS from git url 
+
 0.1.2 （2013-10-23）
 -- resolve the pstrdup name conflict for pg 9.3
 
