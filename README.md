@@ -22,21 +22,13 @@ INSTALL
  git clone https://github.com/amutu/zhparser.git
 
 ```
-3.下载分词词典
-
-```
- cd zhparser
-
- wget -q -O - http://www.xunsearch.com/scws/down/scws-dict-chs-utf8.tar.bz2 | tar xjf -
-
-```
-4.编译和安装zhparser
+3.编译和安装zhparser
 
 ```
  SCWS_HOME=/usr/local make && make install
 
 ```
-5.创建extension
+4.创建extension
 
 ```
  psql dbname superuser -c 'CREATE EXTENSION zhparser'
