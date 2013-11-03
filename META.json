@@ -26,7 +26,7 @@
       }
    },
    "resources": {
-      "homepage": "http://amutu.com/blog/zhparser/"
+      "homepage": "http://amutu.com/blog/zhparser/",
       "bugtracker": {
          "web": "http://github.com/amutu/zhparser/issues/"
       },
