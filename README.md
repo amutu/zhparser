@@ -19,7 +19,7 @@ INSTALL
 
 如果是从github上下载的scws源码需要先运行以下命令生成configure文件： 
 
- aclocal;autoconf;autoheader;libtoolize;automake --add-missing
+ touch README;aclocal;autoconf;autoheader;libtoolize;automake --add-missing
 
 ```
 2.下载zhparser源码
