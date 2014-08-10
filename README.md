@@ -16,6 +16,11 @@ INSTALL
  cd scws-1.2.2 ; ./configure ; make install
 
 注意:在FreeBSD release 10及以上版本上运行configure时，需要增加--with-pic选项。
+
+如果是从github上下载的scws源码需要先运行以下命令生成configure文件： 
+
+ aclocal;autoconf;autoheader;libtoolize;automake --add-missing
+
 ```
 2.下载zhparser源码
 
