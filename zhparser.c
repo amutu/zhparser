@@ -127,7 +127,7 @@ zhprs_getlexeme(PG_FUNCTION_ARGS)
  		* for full attr explanation,visit http://www.xunsearch.com/scws/docs.php#attr
 		*/
 		unsigned int idx = index((cur -> attr)[0]);
-		if(idx < 0 || idx > 25)
+		if(idx > 25)
 			idx = (unsigned int)23;
 		type = (int)((pst -> table)[idx]);
 		*tlen = cur -> len;

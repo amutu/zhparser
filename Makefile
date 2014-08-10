@@ -10,7 +10,7 @@ DATA_TSEARCH = dict.utf8.xdb rules.utf8.ini
 REGRESS = zhparser
 
 PG_CPPFLAGS = -I$(SCWS_HOME)/include/scws 
-SHLIB_LINK = -lscws -L$(SCWS_HOME)/lib -Wl,-rpath=$(SCWS_HOME)/lib
+SHLIB_LINK = -lscws -L$(SCWS_HOME)/lib -Wl,-rpath $(SCWS_HOME)/lib
 
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)

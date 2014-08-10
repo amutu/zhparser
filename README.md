@@ -11,7 +11,7 @@ INSTALL
 1.安装SCWS
 
 ```
- wget -q -O - https://github.com/hightman/scws/archive/1.2.2.tar.gz | tar xzf -
+ wget -q -O - http://www.xunsearch.com/scws/down/scws-1.2.2.tar.bz2 | tar xf -
 
  cd scws-1.2.2 ; ./configure ; make install
 
