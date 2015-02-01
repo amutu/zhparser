@@ -23,10 +23,11 @@ PG_MODULE_MAGIC;
 typedef struct
 {
 	char	   *buffer;			/* text to parse */
-	int			len;			/* length of the text in buffer */
-	int			pos;			/* position of the parser */
-	scws_t s;
-	scws_res_t res,head;
+	int		len;			/* length of the text in buffer */
+	int		pos;			/* position of the parser */
+	scws_t scws;
+	scws_res_t head;
+	scws_res_t curr;
 	char * table;
 } ParserState;
 
@@ -39,6 +40,8 @@ typedef struct
 } LexDescr;
 
 static void init();
+
+static void init_type(LexDescr descr[]);
 
 /*
  * prototypes
@@ -54,11 +57,17 @@ Datum		zhprs_end(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(zhprs_lextype);
 Datum		zhprs_lextype(PG_FUNCTION_ARGS);
+
 static scws_t scws = NULL;
 static char a[26]={'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
+static int type_inited = 0;
+
+static ParserState parser_state;
+
 static void init(){
 	char sharepath[MAXPGPATH];
-	char * dict_path,* rule_path;
+	char dict_path[MAXPGPATH];
+	char rule_path[MAXPGPATH];
 
 	if (!(scws = scws_new())) {
 		ereport(ERROR,
@@ -67,43 +76,41 @@ static void init(){
 				       )));
 	}
 	get_share_path(my_exec_path, sharepath);
-	dict_path = palloc(MAXPGPATH);
 
 	snprintf(dict_path, MAXPGPATH, "%s/tsearch_data/%s.%s",
 			sharepath, "dict.utf8", "xdb");
 	scws_set_charset(scws, "utf-8");
 	scws_set_dict(scws,dict_path, SCWS_XDICT_XDB);
 
-	rule_path = palloc(MAXPGPATH);
 	snprintf(rule_path, MAXPGPATH, "%s/tsearch_data/%s.%s",
 			sharepath, "rules.utf8", "ini");
 	scws_set_rule(scws ,rule_path);
-
 }
 
 /*
  * functions
  */
-	Datum
+Datum
 zhprs_start(PG_FUNCTION_ARGS)
 {
-	ParserState *pst = (ParserState *) palloc0(sizeof(ParserState));
+	ParserState *pst = &parser_state;
 	if(scws == NULL)
 		init();
-	pst -> s = scws;
+	pst -> scws = scws;
 	pst->buffer = (char *) PG_GETARG_POINTER(0);
 	pst->len = PG_GETARG_INT32(1);
 	pst->pos = 0;
 
-	scws_send_text(pst -> s, pst -> buffer, pst -> len);
+	scws_send_text(pst -> scws, pst -> buffer, pst -> len);
 
-	(pst -> res) = (scws_res_t)-1;
+	pst -> curr = (scws_res_t)-1;
+	pst -> head = (scws_res_t)NULL;
 
 	pst -> table = (char *)a;
 	PG_RETURN_POINTER(pst);
 }
 
-	Datum
+Datum
 zhprs_getlexeme(PG_FUNCTION_ARGS)
 {
 	ParserState *pst = (ParserState *) PG_GETARG_POINTER(0);
@@ -111,14 +118,21 @@ zhprs_getlexeme(PG_FUNCTION_ARGS)
 	int		   *tlen = (int *) PG_GETARG_POINTER(2);
 	int			type = -1;
 
-	if((pst -> res) == (scws_res_t)-1 ){
+	/* first time */
+	if((pst -> curr) == (scws_res_t)-1 ){
 
-		(pst -> head) = (pst -> res) = scws_get_result(pst -> s);
+		(pst -> head) = (pst -> curr) = scws_get_result(pst -> scws);
 	}
 
-	if(pst -> res != NULL)
+	if((pst -> head) == NULL ) /* already done the work */
 	{
-		scws_res_t  cur = pst -> res;
+		*tlen = 0;
+		type = 0;
+	}
+	/* have results */
+	else if(pst -> curr != NULL)
+	{
+		scws_res_t  curr = pst -> curr;
 
 		/*
  		* check the first char to determine the lextype
@@ -126,43 +140,44 @@ zhprs_getlexeme(PG_FUNCTION_ARGS)
  		* so for Ag,Dg,Ng,Tg,Vg,the type will be unknown
  		* for full attr explanation,visit http://www.xunsearch.com/scws/docs.php#attr
 		*/
-		unsigned int idx = index((cur -> attr)[0]);
+		unsigned int idx = index((curr -> attr)[0]);
 		if(idx > 25)
 			idx = (unsigned int)23;
 		type = (int)((pst -> table)[idx]);
-		*tlen = cur -> len;
-		*t = pst -> buffer + cur -> off;
+		*tlen = curr -> len;
+		*t = pst -> buffer + curr -> off;
 
-		pst -> res = cur->next;
-		if(pst -> res == NULL ){
+		pst -> curr = curr -> next;
 
+		/* fetch next sentence */
+		if(pst -> curr == NULL ){
 			scws_free_result(pst -> head);
-			(pst -> head) =	(pst -> res) = scws_get_result(pst -> s);
+			(pst -> head) =	(pst -> curr) = scws_get_result(pst -> scws);
 		}
-	}
-	else if((pst -> head) == NULL )
-	{
-		*tlen = 0;
-		type = 0;
 	}
 
 	PG_RETURN_INT32(type);
 }
 
-	Datum
+Datum
 zhprs_end(PG_FUNCTION_ARGS)
 {
-	ParserState *pst = (ParserState *) PG_GETARG_POINTER(0);
-	pfree(pst);
 	PG_RETURN_VOID();
 }
 
-	Datum
+Datum
 zhprs_lextype(PG_FUNCTION_ARGS)
 {
-	
-	LexDescr   *descr = (LexDescr *) palloc(sizeof(LexDescr) * (26 + 1));
+	static LexDescr   descr[27];
+	if(type_inited == 0){
+	    init_type(descr);
+	    type_inited = 1;
+	}
 
+	PG_RETURN_POINTER(descr);
+}
+
+static void init_type(LexDescr descr[]){
 	/* 
 	* there are 26 types in this parser,alias from a to z
 	* for full attr explanation,visit http://www.xunsearch.com/scws/docs.php#attr
@@ -246,7 +261,5 @@ zhprs_lextype(PG_FUNCTION_ARGS)
 	descr[25].alias = pstrdup("z");
 	descr[25].descr = pstrdup("status (zhuang tai)");
 	descr[26].lexid = 0;
-
-	PG_RETURN_POINTER(descr);
 }
 //TODO :headline function
