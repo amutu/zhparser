@@ -97,16 +97,15 @@ zhprs_start(PG_FUNCTION_ARGS)
 	if(scws == NULL)
 		init();
 	pst -> scws = scws;
-	pst->buffer = (char *) PG_GETARG_POINTER(0);
-	pst->len = PG_GETARG_INT32(1);
-	pst->pos = 0;
+	pst -> buffer = (char *) PG_GETARG_POINTER(0);
+	pst -> len = PG_GETARG_INT32(1);
+	pst -> pos = 0;
 
 	scws_send_text(pst -> scws, pst -> buffer, pst -> len);
-
-	pst -> curr = (scws_res_t)-1;
-	pst -> head = (scws_res_t)NULL;
-
 	pst -> table = (char *)a;
+
+	(pst -> head) = (pst -> curr) = scws_get_result(pst -> scws);
+
 	PG_RETURN_POINTER(pst);
 }
 
@@ -118,13 +117,7 @@ zhprs_getlexeme(PG_FUNCTION_ARGS)
 	int		   *tlen = (int *) PG_GETARG_POINTER(2);
 	int			type = -1;
 
-	/* first time */
-	if((pst -> curr) == (scws_res_t)-1 ){
-
-		(pst -> head) = (pst -> curr) = scws_get_result(pst -> scws);
-	}
-
-	if((pst -> head) == NULL ) /* already done the work */
+	if((pst -> head) == NULL ) /* already done the work,or no sentence */
 	{
 		*tlen = 0;
 		type = 0;
@@ -149,7 +142,7 @@ zhprs_getlexeme(PG_FUNCTION_ARGS)
 
 		pst -> curr = curr -> next;
 
-		/* fetch next sentence */
+		/* fetch the next sentence */
 		if(pst -> curr == NULL ){
 			scws_free_result(pst -> head);
 			(pst -> head) =	(pst -> curr) = scws_get_result(pst -> scws);
