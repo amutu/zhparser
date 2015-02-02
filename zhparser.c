@@ -10,6 +10,8 @@
 #include "postgres.h"
 #include "miscadmin.h"
 #include "fmgr.h"
+#include "utils/guc.h"
+#include "utils/builtins.h"
 
 
 PG_MODULE_MAGIC;
@@ -59,32 +61,119 @@ PG_FUNCTION_INFO_V1(zhprs_lextype);
 Datum		zhprs_lextype(PG_FUNCTION_ARGS);
 
 static scws_t scws = NULL;
-static char a[26]={'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
-static int type_inited = 0;
-
+static const char a[26]={'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
+static bool type_inited = false;
 static ParserState parser_state;
+
+static bool punctuation_ignore;
+static bool seg_with_duality;
+static bool dict_in_memory;
+
+static char * extra_dicts;
 
 static void init(){
 	char sharepath[MAXPGPATH];
 	char dict_path[MAXPGPATH];
 	char rule_path[MAXPGPATH];
+	int mode = SCWS_XDICT_XDB | SCWS_XDICT_TXT;
+
+	List *elemlist;
+	ListCell *l;
 
 	if (!(scws = scws_new())) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Chinese Parser Lib SCWS could not init!\"%s\"",""
+				 errmsg("Failed to init Chinese Parser Lib SCWS!\"%s\"",""
 				       )));
 	}
+	
+	DefineCustomBoolVariable(
+		"zhparser.punctuation_ignore",
+		"set if zhparser ignores the puncuation",
+		"set if zhparser ignores the puncuation,except \\r and \\n",
+		&punctuation_ignore,
+		false,
+		PGC_USERSET,
+		0,
+		NULL,
+		NULL,
+		NULL
+		);
+
+	DefineCustomBoolVariable(
+		"zhparser.seg_with_duality",
+		"segment words with duality",
+		"segment words with duality",
+		&seg_with_duality,
+		false,
+		PGC_USERSET,
+		0,
+		NULL,
+		NULL,
+		NULL
+		);
+	DefineCustomBoolVariable(
+		"zhparser.dict_in_memory",
+		"segment words with duality",
+		"segment words with duality",
+		&dict_in_memory,
+		false,
+		PGC_USERSET,
+		0,
+		NULL,
+		NULL,
+		NULL
+		);
+	DefineCustomStringVariable(
+		"zhparser.extra_dicts",
+		"extra dicts files to load",
+		"extra dicts files to load",
+		&extra_dicts,
+		NULL,
+		PGC_USERSET,
+		0,
+		NULL,
+		NULL,
+		NULL
+		);
 	get_share_path(my_exec_path, sharepath);
 
 	snprintf(dict_path, MAXPGPATH, "%s/tsearch_data/%s.%s",
 			sharepath, "dict.utf8", "xdb");
 	scws_set_charset(scws, "utf-8");
-	scws_set_dict(scws,dict_path, SCWS_XDICT_XDB);
+
+	if(dict_in_memory)
+	    mode = mode | SCWS_XDICT_MEM;
+
+	/* ignore error*/
+	scws_set_dict(scws,dict_path,mode); 
+
+	if(extra_dicts != NULL){
+	    if(!SplitIdentifierString(extra_dicts,',',&elemlist)){
+		scws_free(scws);
+		list_free(elemlist);
+		scws = NULL;
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("zhparser.extra_dicts syntax error!\"%s\"",""
+				       )));
+	    }
+
+	    foreach(l,elemlist){
+		snprintf(dict_path, MAXPGPATH, "%s/tsearch_data/%s",
+			sharepath, (char*)lfirst(l));
+		/* ignore error*/
+		scws_add_dict(scws,dict_path,mode); 
+	    }
+	    list_free(elemlist);
+	}
 
 	snprintf(rule_path, MAXPGPATH, "%s/tsearch_data/%s.%s",
 			sharepath, "rules.utf8", "ini");
 	scws_set_rule(scws ,rule_path);
+
+	scws_set_ignore(scws, (int)punctuation_ignore);
+	scws_set_duality(scws,(int)seg_with_duality);
 }
 
 /*
@@ -135,7 +224,8 @@ zhprs_getlexeme(PG_FUNCTION_ARGS)
 		*/
 		unsigned int idx = index((curr -> attr)[0]);
 		if(idx > 25)
-			idx = (unsigned int)23;
+			idx = (unsigned int)'x';
+
 		type = (int)((pst -> table)[idx]);
 		*tlen = curr -> len;
 		*t = pst -> buffer + curr -> off;
