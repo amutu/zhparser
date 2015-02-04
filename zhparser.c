@@ -65,17 +65,22 @@ static const char a[26]={'a','b','c','d','e','f','g','h','i','j','k','l','m','n'
 static bool type_inited = false;
 static ParserState parser_state;
 
-static bool punctuation_ignore;
-static bool seg_with_duality;
-static bool dict_in_memory;
-
-static char * extra_dicts;
+/* config */
+static bool punctuation_ignore = false;
+static bool seg_with_duality = false;
+static bool dict_in_memory = false;
+static bool multi_short = false;
+static bool multi_duality = false;
+static bool multi_zmain = false;
+static bool multi_zall = false;
+static char * extra_dicts = NULL;
 
 static void init(){
 	char sharepath[MAXPGPATH];
 	char dict_path[MAXPGPATH];
 	char rule_path[MAXPGPATH];
-	int mode = SCWS_XDICT_XDB | SCWS_XDICT_TXT;
+	int load_dict_mode = SCWS_XDICT_XDB | SCWS_XDICT_TXT;
+	int multi_mode = 0x0;
 
 	List *elemlist;
 	ListCell *l;
@@ -114,9 +119,57 @@ static void init(){
 		);
 	DefineCustomBoolVariable(
 		"zhparser.dict_in_memory",
-		"segment words with duality",
-		"segment words with duality",
+		"load dicts into memory",
+		"load dicts into memory",
 		&dict_in_memory,
+		false,
+		PGC_USERSET,
+		0,
+		NULL,
+		NULL,
+		NULL
+		);
+	DefineCustomBoolVariable(
+		"zhparser.multi_short",
+		"prefer short words",
+		"prefer short words",
+		&multi_short,
+		false,
+		PGC_USERSET,
+		0,
+		NULL,
+		NULL,
+		NULL
+		);
+	DefineCustomBoolVariable(
+		"zhparser.multi_duality",
+		"prefer duality",
+		"prefer duality",
+		&multi_duality,
+		false,
+		PGC_USERSET,
+		0,
+		NULL,
+		NULL,
+		NULL
+		);
+	DefineCustomBoolVariable(
+		"zhparser.multi_zmain",
+		"prefer most important element",
+		"prefer most important element",
+		&multi_zmain,
+		false,
+		PGC_USERSET,
+		0,
+		NULL,
+		NULL,
+		NULL
+		);
+	DefineCustomBoolVariable(
+		"zhparser.multi_zall",
+		"prefer all element",
+		"prefer all element",
+		&multi_zall,
 		false,
 		PGC_USERSET,
 		0,
@@ -143,10 +196,10 @@ static void init(){
 	scws_set_charset(scws, "utf-8");
 
 	if(dict_in_memory)
-	    mode = mode | SCWS_XDICT_MEM;
+	    load_dict_mode = load_dict_mode | SCWS_XDICT_MEM;
 
 	/* ignore error*/
-	scws_set_dict(scws,dict_path,mode); 
+	scws_set_dict(scws,dict_path,load_dict_mode); 
 
 	if(extra_dicts != NULL){
 	    if(!SplitIdentifierString(extra_dicts,',',&elemlist)){
@@ -163,7 +216,7 @@ static void init(){
 		snprintf(dict_path, MAXPGPATH, "%s/tsearch_data/%s",
 			sharepath, (char*)lfirst(l));
 		/* ignore error*/
-		scws_add_dict(scws,dict_path,mode); 
+		scws_add_dict(scws,dict_path,load_dict_mode); 
 	    }
 	    list_free(elemlist);
 	}
@@ -174,6 +227,24 @@ static void init(){
 
 	scws_set_ignore(scws, (int)punctuation_ignore);
 	scws_set_duality(scws,(int)seg_with_duality);
+
+	if(multi_short){
+	    multi_mode |= SCWS_MULTI_SHORT;
+	}
+
+	if(multi_duality){
+	    multi_mode |= SCWS_MULTI_DUALITY;
+	}
+
+	if(multi_zmain){
+	    multi_mode |= SCWS_MULTI_ZMAIN;
+	}
+
+	if(multi_zall){
+	    multi_mode |= SCWS_MULTI_ZALL;
+	}
+
+	scws_set_multi(scws,multi_mode);
 }
 
 /*
