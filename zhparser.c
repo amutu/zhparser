@@ -199,7 +199,12 @@ static void init(){
 	    load_dict_mode = load_dict_mode | SCWS_XDICT_MEM;
 
 	/* ignore error*/
-	scws_set_dict(scws,dict_path,load_dict_mode); 
+	if( scws_set_dict(scws,dict_path,load_dict_mode) != 0){
+	    ereport(NOTICE,
+		    (errcode(ERRCODE_INTERNAL_ERROR),
+		     errmsg("zhparser set dict : \"%s\" failed!",dict_path
+			 )));
+	}
 
 	if(extra_dicts != NULL){
 	    if(!SplitIdentifierString(extra_dicts,',',&elemlist)){
@@ -208,7 +213,7 @@ static void init(){
 		scws = NULL;
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("zhparser.extra_dicts syntax error!\"%s\"",""
+				 errmsg("zhparser.extra_dicts syntax error! extra_dicts is \"%s\"",extra_dicts
 				       )));
 	    }
 
@@ -216,7 +221,12 @@ static void init(){
 		snprintf(dict_path, MAXPGPATH, "%s/tsearch_data/%s",
 			sharepath, (char*)lfirst(l));
 		/* ignore error*/
-		scws_add_dict(scws,dict_path,load_dict_mode); 
+		if( scws_add_dict(scws,dict_path,load_dict_mode) != 0 ){
+		    ereport(NOTICE,
+			    (errcode(ERRCODE_INTERNAL_ERROR),
+			     errmsg("zhparser add dict : \"%s\" failed!",dict_path
+				 )));
+		}
 	    }
 	    list_free(elemlist);
 	}
