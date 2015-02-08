@@ -42,6 +42,22 @@ INSTALL
  psql dbname superuser -c 'CREATE EXTENSION zhparser'
 
 ```
+
+CONFIGURATION
+-------
+PG9.2及以上版本使用
+
+zhparser.punctuation_ignore = t 
+zhparser.seg_with_duality = t 
+zhparser.dict_in_memory = t 
+zhparser.multi_short = t 
+zhparser.multi_duality = t 
+zhparser.multi_zmain = t 
+zhparser.multi_zall = t 
+
+自定义词典放在share/postgresql/tsearch_data目录中,zhparser自动检测字典类型 
+zhparser.extra_dicts = 'dict_extra.txt' 
+
 EXAMPLE
 -------
 ```
@@ -69,6 +85,15 @@ SELECT to_tsvector('testzhcfg','“今年保障房新开工数量虽然有所下
 
 SELECT to_tsquery('testzhcfg', '保障房资金压力');
 ```
+
+自定义词库
+-------
+** 详解 TXT 词库的写法 (TXT词库目前已兼容 cli/scws_gen_dict 所用的文本词库) ** 
+1) 每行一条记录，以 # 或 分号开头的相当于注释，忽略跳过。 
+2) 每行由4个字段组成，依次为“词语"(由中文字或3个以下的字母合成), "TF", "IDF", "词性"， 字段时间用空格或制表符分开，数量不限，可自行对齐以美化。 
+3) 除“词语”外，其它字段可忽略不写。若忽略，TF和IDF默认值为 1.0 而 词性为 "@" 
+4) 由于 txt 库动态加载（内部监测文件修改时间自动转换成 xdb 存于系统临时目录），故建议TXT词库不要过大！ 
+5) 删除词作法，请将词性设为“!“，则表示该词设为无效，即使在其它核心库中存在该词也视为无效。 
 
 COPYRITE
 --------
