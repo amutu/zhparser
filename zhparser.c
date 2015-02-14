@@ -81,7 +81,6 @@ static void init(){
 	char dict_path[MAXPGPATH];
 	char rule_path[MAXPGPATH];
 	int load_dict_mode = SCWS_XDICT_XDB | SCWS_XDICT_TXT;
-	int multi_mode = 0x0;
 
 	List *elemlist;
 	ListCell *l;
@@ -244,6 +243,8 @@ Datum
 zhprs_start(PG_FUNCTION_ARGS)
 {
 	ParserState *pst = &parser_state;
+	int multi_mode = 0x0;
+
 	if(scws == NULL)
 		init();
 	pst -> scws = scws;
@@ -306,7 +307,7 @@ zhprs_getlexeme(PG_FUNCTION_ARGS)
 		*/
 		unsigned int idx = index((curr -> attr)[0]);
 		if(idx > 25)
-			idx = (unsigned int)'x';
+			idx = index('x');
 
 		type = (int)((pst -> table)[idx]);
 		*tlen = curr -> len;
