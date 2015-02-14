@@ -66,14 +66,15 @@ static bool type_inited = false;
 static ParserState parser_state;
 
 /* config */
+static bool dict_in_memory = false;
+static char * extra_dicts = NULL;
+
 static bool punctuation_ignore = false;
 static bool seg_with_duality = false;
-static bool dict_in_memory = false;
 static bool multi_short = false;
 static bool multi_duality = false;
 static bool multi_zmain = false;
 static bool multi_zall = false;
-static char * extra_dicts = NULL;
 
 static void init(){
 	char sharepath[MAXPGPATH];
@@ -93,6 +94,30 @@ static void init(){
 	}
 	
 	DefineCustomBoolVariable(
+		"zhparser.dict_in_memory",
+		"load dicts into memory",
+		"load dicts into memory",
+		&dict_in_memory,
+		false,
+		PGC_BACKEND,
+		0,
+		NULL,
+		NULL,
+		NULL
+		);
+	DefineCustomStringVariable(
+		"zhparser.extra_dicts",
+		"extra dicts files to load",
+		"extra dicts files to load",
+		&extra_dicts,
+		NULL,
+		PGC_BACKEND,
+		0,
+		NULL,
+		NULL,
+		NULL
+		);
+	DefineCustomBoolVariable(
 		"zhparser.punctuation_ignore",
 		"set if zhparser ignores the puncuation",
 		"set if zhparser ignores the puncuation,except \\r and \\n",
@@ -110,18 +135,6 @@ static void init(){
 		"segment words with duality",
 		"segment words with duality",
 		&seg_with_duality,
-		false,
-		PGC_USERSET,
-		0,
-		NULL,
-		NULL,
-		NULL
-		);
-	DefineCustomBoolVariable(
-		"zhparser.dict_in_memory",
-		"load dicts into memory",
-		"load dicts into memory",
-		&dict_in_memory,
 		false,
 		PGC_USERSET,
 		0,
@@ -177,20 +190,8 @@ static void init(){
 		NULL,
 		NULL
 		);
-	DefineCustomStringVariable(
-		"zhparser.extra_dicts",
-		"extra dicts files to load",
-		"extra dicts files to load",
-		&extra_dicts,
-		NULL,
-		PGC_USERSET,
-		0,
-		NULL,
-		NULL,
-		NULL
-		);
-	get_share_path(my_exec_path, sharepath);
 
+	get_share_path(my_exec_path, sharepath);
 	snprintf(dict_path, MAXPGPATH, "%s/tsearch_data/%s.%s",
 			sharepath, "dict.utf8", "xdb");
 	scws_set_charset(scws, "utf-8");
