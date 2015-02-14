@@ -234,6 +234,21 @@ static void init(){
 	snprintf(rule_path, MAXPGPATH, "%s/tsearch_data/%s.%s",
 			sharepath, "rules.utf8", "ini");
 	scws_set_rule(scws ,rule_path);
+}
+
+/*
+ * functions
+ */
+Datum
+zhprs_start(PG_FUNCTION_ARGS)
+{
+	ParserState *pst = &parser_state;
+	if(scws == NULL)
+		init();
+	pst -> scws = scws;
+	pst -> buffer = (char *) PG_GETARG_POINTER(0);
+	pst -> len = PG_GETARG_INT32(1);
+	pst -> pos = 0;
 
 	scws_set_ignore(scws, (int)punctuation_ignore);
 	scws_set_duality(scws,(int)seg_with_duality);
@@ -255,21 +270,6 @@ static void init(){
 	}
 
 	scws_set_multi(scws,multi_mode);
-}
-
-/*
- * functions
- */
-Datum
-zhprs_start(PG_FUNCTION_ARGS)
-{
-	ParserState *pst = &parser_state;
-	if(scws == NULL)
-		init();
-	pst -> scws = scws;
-	pst -> buffer = (char *) PG_GETARG_POINTER(0);
-	pst -> len = PG_GETARG_INT32(1);
-	pst -> pos = 0;
 
 	scws_send_text(pst -> scws, pst -> buffer, pst -> len);
 	pst -> table = (char *)a;
