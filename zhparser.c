@@ -15,8 +15,6 @@
 
 
 PG_MODULE_MAGIC;
-
-#define index(c) ((unsigned int)(c) - (unsigned int)'a')
 /*
  * types
  */
@@ -30,7 +28,6 @@ typedef struct
 	scws_t scws;
 	scws_res_t head;
 	scws_res_t curr;
-	char * table;
 } ParserState;
 
 /* copy-paste from wparser.h of tsearch2 */
@@ -61,7 +58,6 @@ PG_FUNCTION_INFO_V1(zhprs_lextype);
 Datum		zhprs_lextype(PG_FUNCTION_ARGS);
 
 static scws_t scws = NULL;
-static const char a[26]={'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
 static bool type_inited = false;
 static ParserState parser_state;
 
@@ -274,7 +270,6 @@ zhprs_start(PG_FUNCTION_ARGS)
 	scws_set_multi(scws,multi_mode);
 
 	scws_send_text(pst -> scws, pst -> buffer, pst -> len);
-	pst -> table = (char *)a;
 
 	(pst -> head) = (pst -> curr) = scws_get_result(pst -> scws);
 
@@ -305,11 +300,9 @@ zhprs_getlexeme(PG_FUNCTION_ARGS)
  		* so for Ag,Dg,Ng,Tg,Vg,the type will be unknown
  		* for full attr explanation,visit http://www.xunsearch.com/scws/docs.php#attr
 		*/
-		unsigned int idx = index((curr -> attr)[0]);
-		if(idx > 25)
-			idx = index('x');
-
-		type = (int)((pst -> table)[idx]);
+		type = (int)(curr -> attr)[0];
+		if(type > (int)'x' || type < (int)'a')
+		    type = (int)'x';
 		*tlen = curr -> len;
 		*t = pst -> buffer + curr -> off;
 
