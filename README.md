@@ -61,9 +61,9 @@ zhparser.multi_zmain = f
 
 zhparser.multi_zall = f 
 
-除了zhparser自带的词典，用户可以增加自定义词典，自定义词典的优先级高于自带的词典。自定义词典的文件必须放在share/postgresql/tsearch_data目录中,zhparser自动检测字典类型，多个文件使用逗号分隔,词典的分词优先级由低到高,如：  
+除了zhparser自带的词典，用户可以增加自定义词典，自定义词典的优先级高于自带的词典。自定义词典的文件必须放在share/postgresql/tsearch_data目录中,zhparser根据文件扩展名确定词典的格式类型，.txt扩展名表示词典是文本格式，.xdb扩展名表示这个词典是xdb格式，多个文件使用逗号分隔,词典的分词优先级由低到高,如：  
 
-zhparser.extra_dicts = 'dict_extra.txt,mydict.txt' 
+zhparser.extra_dicts = 'dict_extra.txt,mydict.xdb' 
 
 注意：zhparser.extra_dicts和zhparser.dict_in_memory两个选项需要在backend启动前设置（可以在配置文件中修改然后reload，之后新建连接会生效）,其他选项可以随时在session中设置生效。zhparser的选项与scws相关的选项对应，关于这些选项的含义，可以参考scws的文档：http://www.xunsearch.com/scws/docs.php#libscws  
 

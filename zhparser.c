@@ -13,6 +13,11 @@
 #include "utils/guc.h"
 #include "utils/builtins.h"
 
+/* dict file extension */
+#define TXT_EXT ".txt"
+#define XDB_EXT ".xdb"
+/* length of file extension */
+#define EXT_LEN 4
 
 PG_MODULE_MAGIC;
 /*
@@ -76,7 +81,7 @@ static void init(){
 	char sharepath[MAXPGPATH];
 	char dict_path[MAXPGPATH];
 	char rule_path[MAXPGPATH];
-	int load_dict_mode = SCWS_XDICT_XDB | SCWS_XDICT_TXT;
+	int load_dict_mem_mode = 0x0;
 
 	List *elemlist;
 	ListCell *l;
@@ -192,10 +197,10 @@ static void init(){
 	scws_set_charset(scws, "utf-8");
 
 	if(dict_in_memory)
-	    load_dict_mode = load_dict_mode | SCWS_XDICT_MEM;
+	    load_dict_mem_mode = SCWS_XDICT_MEM;
 
-	/* ignore error*/
-	if( scws_set_dict(scws,dict_path,load_dict_mode) != 0){
+	/* ignore error,default dict is xdb */
+	if( scws_set_dict(scws,dict_path,load_dict_mem_mode | SCWS_XDICT_XDB ) != 0){
 	    ereport(NOTICE,
 		    (errcode(ERRCODE_INTERNAL_ERROR),
 		     errmsg("zhparser set dict : \"%s\" failed!",dict_path
@@ -214,6 +219,29 @@ static void init(){
 	    }
 
 	    foreach(l,elemlist){
+		int load_dict_mode = load_dict_mem_mode;
+		char * ext = strrchr((char*)lfirst(l),'.');
+		if(ext != NULL && strlen(ext) == EXT_LEN){
+		    if(strncmp(ext,TXT_EXT,EXT_LEN) == 0){
+			load_dict_mode |= SCWS_XDICT_TXT;
+		    }
+		    else if(strncmp(ext,XDB_EXT,EXT_LEN) == 0){
+			load_dict_mode |= SCWS_XDICT_XDB;
+		    }
+		}
+
+		if(((load_dict_mode & SCWS_XDICT_TXT) == 0) &&
+			((load_dict_mode & SCWS_XDICT_XDB) == 0)){
+			scws_free(scws);
+			list_free(elemlist);
+			scws = NULL;
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("zhparser.extra_dicts setting error,the file name must end with .txt or .xdb! error file name is \"%s\"",(char*)lfirst(l)
+				     )));
+		
+		}
+
 		snprintf(dict_path, MAXPGPATH, "%s/tsearch_data/%s",
 			sharepath, (char*)lfirst(l));
 		/* ignore error*/
