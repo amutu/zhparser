@@ -45,27 +45,27 @@ INSTALL
 
 CONFIGURATION
 -------
-PG9.2及以上版本使用
+以下配置在PG9.2及以上版本使用,这些选项是用来控制字典加载行为和分词行为的,这些选项都不是必须的,默认都为false(即如果没有在配置文件中设置这些选项，则zhparser的行为与将下面的选项设置为false一致)。
 
-zhparser.punctuation_ignore = t 
+zhparser.punctuation_ignore = f 
 
-zhparser.seg_with_duality = t 
+zhparser.seg_with_duality = f 
 
-zhparser.dict_in_memory = t 
+zhparser.dict_in_memory = f 
 
-zhparser.multi_short = t 
+zhparser.multi_short = f 
 
-zhparser.multi_duality = t 
+zhparser.multi_duality = f 
 
-zhparser.multi_zmain = t 
+zhparser.multi_zmain = f 
 
-zhparser.multi_zall = t 
+zhparser.multi_zall = f 
 
-自定义词典放在share/postgresql/tsearch_data目录中,zhparser自动检测字典类型 
+除了zhparser自带的词典，用户可以增加自定义词典，自定义词典的优先级高于自带的词典。自定义词典的文件必须放在share/postgresql/tsearch_data目录中,zhparser自动检测字典类型，多个文件使用逗号分隔,词典的分词优先级由低到高,如：  
 
-zhparser.extra_dicts = 'dict_extra.txt' 
+zhparser.extra_dicts = 'dict_extra.txt,mydict.txt' 
 
-注意：zhparser.extra_dicts和zhparser.dict_in_memory两个选项需要在backend启动前设置（可以在配置文件中修改然后reload，之后新建链接会生效）,其他选项可以随时在session中设置生效。 
+注意：zhparser.extra_dicts和zhparser.dict_in_memory两个选项需要在backend启动前设置（可以在配置文件中修改然后reload，之后新建连接会生效）,其他选项可以随时在session中设置生效。zhparser的选项与scws相关的选项对应，关于这些选项的含义，可以参考scws的文档：http://www.xunsearch.com/scws/docs.php#libscws  
 
 EXAMPLE
 -------
@@ -105,9 +105,11 @@ SELECT to_tsquery('testzhcfg', '保障房资金压力');
 
 3) 除“词语”外，其它字段可忽略不写。若忽略，TF和IDF默认值为 1.0 而 词性为 "@" 
 
-4) 由于 txt 库动态加载（内部监测文件修改时间自动转换成 xdb 存于系统临时目录），故建议TXT词库不要过大 
+4) 由于 TXT 库动态加载（内部监测文件修改时间自动转换成 xdb 存于系统临时目录），故建议TXT词库不要过大 
 
 5) 删除词作法，请将词性设为“!“，则表示该词设为无效，即使在其它核心库中存在该词也视为无效 
+
+注意：自定义词典的格式可以是文本TXT，也可以是二进制的XDB格式。XDB格式效率更高，适合大辞典使用。可以使用scws自带的工具scws-gen-dict将文本词典转换为XDB格式。具体参见：http://www.xunsearch.com/scws/docs.php#utilscws 
 
 COPYRITE
 --------
