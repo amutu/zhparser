@@ -65,6 +65,8 @@ zhparser.multi_zall = t
 
 zhparser.extra_dicts = 'dict_extra.txt' 
 
+注意：zhparser.extra_dicts和zhparser.dict_in_memory两个选项需要在backend启动前设置（可以在配置文件中修改然后reload，之后新建链接会生效）,其他选项可以随时在session中设置生效。 
+
 EXAMPLE
 -------
 ```
