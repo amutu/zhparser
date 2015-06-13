@@ -44,8 +44,8 @@ typedef struct
 	char	   *descr;
 } LexDescr;
 
-static void init();
-static void init_type(LexDescr descr[]);
+static void zhprs_init();
+static void zhprs_init_type(LexDescr descr[]);
 
 /*
  * prototypes
@@ -68,18 +68,18 @@ static bool type_inited = false;
 static ParserState parser_state;
 
 /* config */
-static bool dict_in_memory = false;
-static char * extra_dicts = NULL;
+static bool zhprs_dict_in_memory = false;
+static char * zhprs_extra_dicts = NULL;
 
-static bool punctuation_ignore = false;
-static bool seg_with_duality = false;
-static bool multi_short = false;
-static bool multi_duality = false;
-static bool multi_zmain = false;
-static bool multi_zall = false;
+static bool zhprs_punctuation_ignore = false;
+static bool zhprs_seg_with_duality = false;
+static bool zhprs_multi_short = false;
+static bool zhprs_multi_duality = false;
+static bool zhprs_multi_zmain = false;
+static bool zhprs_multi_zall = false;
 
 static void
-init()
+zhprs_init()
 {
 	char sharepath[MAXPGPATH];
 	char dict_path[MAXPGPATH];
@@ -100,7 +100,7 @@ init()
 		"zhparser.dict_in_memory",
 		"load dicts into memory",
 		"load dicts into memory",
-		&dict_in_memory,
+		&zhprs_dict_in_memory,
 		false,
 		PGC_BACKEND,
 		0,
@@ -112,7 +112,7 @@ init()
 		"zhparser.extra_dicts",
 		"extra dicts files to load",
 		"extra dicts files to load",
-		&extra_dicts,
+		&zhprs_extra_dicts,
 		NULL,
 		PGC_BACKEND,
 		0,
@@ -124,7 +124,7 @@ init()
 		"zhparser.punctuation_ignore",
 		"set if zhparser ignores the puncuation",
 		"set if zhparser ignores the puncuation,except \\r and \\n",
-		&punctuation_ignore,
+		&zhprs_punctuation_ignore,
 		false,
 		PGC_USERSET,
 		0,
@@ -137,7 +137,7 @@ init()
 		"zhparser.seg_with_duality",
 		"segment words with duality",
 		"segment words with duality",
-		&seg_with_duality,
+		&zhprs_seg_with_duality,
 		false,
 		PGC_USERSET,
 		0,
@@ -149,7 +149,7 @@ init()
 		"zhparser.multi_short",
 		"prefer short words",
 		"prefer short words",
-		&multi_short,
+		&zhprs_multi_short,
 		false,
 		PGC_USERSET,
 		0,
@@ -161,7 +161,7 @@ init()
 		"zhparser.multi_duality",
 		"prefer duality",
 		"prefer duality",
-		&multi_duality,
+		&zhprs_multi_duality,
 		false,
 		PGC_USERSET,
 		0,
@@ -173,7 +173,7 @@ init()
 		"zhparser.multi_zmain",
 		"prefer most important element",
 		"prefer most important element",
-		&multi_zmain,
+		&zhprs_multi_zmain,
 		false,
 		PGC_USERSET,
 		0,
@@ -185,7 +185,7 @@ init()
 		"zhparser.multi_zall",
 		"prefer all element",
 		"prefer all element",
-		&multi_zall,
+		&zhprs_multi_zall,
 		false,
 		PGC_USERSET,
 		0,
@@ -199,7 +199,7 @@ init()
 			sharepath, "dict.utf8", "xdb");
 	scws_set_charset(scws, "utf-8");
 
-	if (dict_in_memory)
+	if (zhprs_dict_in_memory)
 		load_dict_mem_mode = SCWS_XDICT_MEM;
 
 	/* ignore error,default dict is xdb */
@@ -209,9 +209,9 @@ init()
 				 errmsg("zhparser set dict : \"%s\" failed!",
 						 dict_path)));
 
-	if (extra_dicts != NULL)
+	if (zhprs_extra_dicts != NULL)
 	{
-		if (!SplitIdentifierString(extra_dicts, ',', &elemlist))
+		if (!SplitIdentifierString(zhprs_extra_dicts, ',', &elemlist))
 		{
 			scws_free(scws);
 			list_free(elemlist);
@@ -219,7 +219,7 @@ init()
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("zhparser.extra_dicts syntax error! extra_dicts is \"%s\"",
-							 extra_dicts)));
+							 zhprs_extra_dicts)));
 		}
 
 		foreach(l,elemlist)
@@ -275,25 +275,25 @@ zhprs_start(PG_FUNCTION_ARGS)
 	int multi_mode = 0x0;
 
 	if (scws == NULL)
-		init();
+		zhprs_init();
 	pst->scws = scws;
 	pst->buffer = (char *) PG_GETARG_POINTER(0);
 	pst->len = PG_GETARG_INT32(1);
 	pst->pos = 0;
 
-	scws_set_ignore(scws, (int)punctuation_ignore);
-	scws_set_duality(scws,(int)seg_with_duality);
+	scws_set_ignore(scws, (int)zhprs_punctuation_ignore);
+	scws_set_duality(scws,(int)zhprs_seg_with_duality);
 
-	if (multi_short)
+	if (zhprs_multi_short)
 		multi_mode |= SCWS_MULTI_SHORT;
 
-	if (multi_duality)
+	if (zhprs_multi_duality)
 		multi_mode |= SCWS_MULTI_DUALITY;
 
-	if (multi_zmain)
+	if (zhprs_multi_zmain)
 		multi_mode |= SCWS_MULTI_ZMAIN;
 
-	if (multi_zall)
+	if (zhprs_multi_zall)
 		multi_mode |= SCWS_MULTI_ZALL;
 
 	scws_set_multi(scws, multi_mode);
@@ -362,7 +362,7 @@ zhprs_lextype(PG_FUNCTION_ARGS)
 
 	if (type_inited == 0)
 	{
-		init_type(descr);
+		zhprs_init_type(descr);
 		type_inited = 1;
 	}
 
@@ -370,7 +370,7 @@ zhprs_lextype(PG_FUNCTION_ARGS)
 }
 
 static void
-init_type(LexDescr descr[])
+zhprs_init_type(LexDescr descr[])
 {
 	/* 
 	* there are 26 types in this parser,alias from a to z
