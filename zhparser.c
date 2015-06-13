@@ -20,6 +20,7 @@
 #define EXT_LEN 4
 
 PG_MODULE_MAGIC;
+
 /*
  * types
  */
@@ -28,11 +29,11 @@ PG_MODULE_MAGIC;
 typedef struct
 {
 	char	   *buffer;			/* text to parse */
-	int		len;			/* length of the text in buffer */
-	int		pos;			/* position of the parser */
-	scws_t scws;
-	scws_res_t head;
-	scws_res_t curr;
+	int			len;			/* length of the text in buffer */
+	int			pos;			/* position of the parser */
+	scws_t		scws;
+	scws_res_t	head;
+	scws_res_t	curr;
 } ParserState;
 
 /* copy-paste from wparser.h of tsearch2 */
@@ -44,7 +45,6 @@ typedef struct
 } LexDescr;
 
 static void init();
-
 static void init_type(LexDescr descr[]);
 
 /*
@@ -62,6 +62,7 @@ Datum		zhprs_end(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(zhprs_lextype);
 Datum		zhprs_lextype(PG_FUNCTION_ARGS);
 
+
 static scws_t scws = NULL;
 static bool type_inited = false;
 static ParserState parser_state;
@@ -77,7 +78,9 @@ static bool multi_duality = false;
 static bool multi_zmain = false;
 static bool multi_zall = false;
 
-static void init(){
+static void
+init()
+{
 	char sharepath[MAXPGPATH];
 	char dict_path[MAXPGPATH];
 	char rule_path[MAXPGPATH];
@@ -86,12 +89,12 @@ static void init(){
 	List *elemlist;
 	ListCell *l;
 
-	if (!(scws = scws_new())) {
+	scws = scws_new();
+	if (!scws)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Failed to init Chinese Parser Lib SCWS!\"%s\"",""
-				       )));
-	}
+				 errmsg("Failed to init Chinese Parser Lib SCWS!\"%s\"",
+						 "")));
 	
 	DefineCustomBoolVariable(
 		"zhparser.dict_in_memory",
@@ -196,63 +199,65 @@ static void init(){
 			sharepath, "dict.utf8", "xdb");
 	scws_set_charset(scws, "utf-8");
 
-	if(dict_in_memory)
-	    load_dict_mem_mode = SCWS_XDICT_MEM;
+	if (dict_in_memory)
+		load_dict_mem_mode = SCWS_XDICT_MEM;
 
 	/* ignore error,default dict is xdb */
-	if( scws_set_dict(scws,dict_path,load_dict_mem_mode | SCWS_XDICT_XDB ) != 0){
-	    ereport(NOTICE,
-		    (errcode(ERRCODE_INTERNAL_ERROR),
-		     errmsg("zhparser set dict : \"%s\" failed!",dict_path
-			 )));
-	}
-
-	if(extra_dicts != NULL){
-	    if(!SplitIdentifierString(extra_dicts,',',&elemlist)){
-		scws_free(scws);
-		list_free(elemlist);
-		scws = NULL;
-		ereport(ERROR,
+	if (scws_set_dict(scws,dict_path,load_dict_mem_mode | SCWS_XDICT_XDB ) != 0)
+		ereport(NOTICE,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("zhparser.extra_dicts syntax error! extra_dicts is \"%s\"",extra_dicts
-				       )));
-	    }
+				 errmsg("zhparser set dict : \"%s\" failed!",
+						 dict_path)));
 
-	    foreach(l,elemlist){
-		int load_dict_mode = load_dict_mem_mode;
-		char * ext = strrchr((char*)lfirst(l),'.');
-		if(ext != NULL && strlen(ext) == EXT_LEN){
-		    if(strncmp(ext,TXT_EXT,EXT_LEN) == 0){
-			load_dict_mode |= SCWS_XDICT_TXT;
-		    }
-		    else if(strncmp(ext,XDB_EXT,EXT_LEN) == 0){
-			load_dict_mode |= SCWS_XDICT_XDB;
-		    }
-		}
-
-		if(((load_dict_mode & SCWS_XDICT_TXT) == 0) &&
-			((load_dict_mode & SCWS_XDICT_XDB) == 0)){
+	if (extra_dicts != NULL)
+	{
+		if (!SplitIdentifierString(extra_dicts, ',', &elemlist))
+		{
 			scws_free(scws);
 			list_free(elemlist);
 			scws = NULL;
 			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("zhparser.extra_dicts setting error,the file name must end with .txt or .xdb! error file name is \"%s\"",(char*)lfirst(l)
-				     )));
-		
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("zhparser.extra_dicts syntax error! extra_dicts is \"%s\"",
+							 extra_dicts)));
 		}
 
-		snprintf(dict_path, MAXPGPATH, "%s/tsearch_data/%s",
-			sharepath, (char*)lfirst(l));
-		/* ignore error*/
-		if( scws_add_dict(scws,dict_path,load_dict_mode) != 0 ){
-		    ereport(NOTICE,
-			    (errcode(ERRCODE_INTERNAL_ERROR),
-			     errmsg("zhparser add dict : \"%s\" failed!",dict_path
-				 )));
+		foreach(l,elemlist)
+		{
+			char	   *tok = (char *) lfirst(l);
+
+			int load_dict_mode = load_dict_mem_mode;
+			char * ext = strrchr(tok, '.');
+			if (ext != NULL && strlen(ext) == EXT_LEN)
+			{
+				if (strncmp(ext,TXT_EXT,EXT_LEN) == 0)
+					load_dict_mode |= SCWS_XDICT_TXT;
+				else if (strncmp(ext,XDB_EXT,EXT_LEN) == 0)
+				load_dict_mode |= SCWS_XDICT_XDB;
+			}
+
+			if (((load_dict_mode & SCWS_XDICT_TXT) == 0) &&
+				((load_dict_mode & SCWS_XDICT_XDB) == 0))
+			{
+				scws_free(scws);
+				list_free(elemlist);
+				scws = NULL;
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("zhparser.extra_dicts setting error,the file name must end with .txt or .xdb! error file name is \"%s\"",
+								 tok)));
+			}
+
+			snprintf(dict_path, MAXPGPATH, "%s/tsearch_data/%s",
+					sharepath, tok);
+			/* ignore error*/
+			if (scws_add_dict(scws, dict_path, load_dict_mode) != 0)
+				ereport(NOTICE,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("zhparser add dict : \"%s\" failed!",
+								 dict_path)));
 		}
-	    }
-	    list_free(elemlist);
+		list_free(elemlist);
 	}
 
 	snprintf(rule_path, MAXPGPATH, "%s/tsearch_data/%s.%s",
@@ -269,37 +274,33 @@ zhprs_start(PG_FUNCTION_ARGS)
 	ParserState *pst = &parser_state;
 	int multi_mode = 0x0;
 
-	if(scws == NULL)
+	if (scws == NULL)
 		init();
-	pst -> scws = scws;
-	pst -> buffer = (char *) PG_GETARG_POINTER(0);
-	pst -> len = PG_GETARG_INT32(1);
-	pst -> pos = 0;
+	pst->scws = scws;
+	pst->buffer = (char *) PG_GETARG_POINTER(0);
+	pst->len = PG_GETARG_INT32(1);
+	pst->pos = 0;
 
 	scws_set_ignore(scws, (int)punctuation_ignore);
 	scws_set_duality(scws,(int)seg_with_duality);
 
-	if(multi_short){
-	    multi_mode |= SCWS_MULTI_SHORT;
-	}
+	if (multi_short)
+		multi_mode |= SCWS_MULTI_SHORT;
 
-	if(multi_duality){
-	    multi_mode |= SCWS_MULTI_DUALITY;
-	}
+	if (multi_duality)
+		multi_mode |= SCWS_MULTI_DUALITY;
 
-	if(multi_zmain){
-	    multi_mode |= SCWS_MULTI_ZMAIN;
-	}
+	if (multi_zmain)
+		multi_mode |= SCWS_MULTI_ZMAIN;
 
-	if(multi_zall){
-	    multi_mode |= SCWS_MULTI_ZALL;
-	}
+	if (multi_zall)
+		multi_mode |= SCWS_MULTI_ZALL;
 
-	scws_set_multi(scws,multi_mode);
+	scws_set_multi(scws, multi_mode);
 
-	scws_send_text(pst -> scws, pst -> buffer, pst -> len);
+	scws_send_text(scws, pst->buffer, pst->len);
 
-	(pst -> head) = (pst -> curr) = scws_get_result(pst -> scws);
+	pst->head = pst->curr = scws_get_result(scws);
 
 	PG_RETURN_POINTER(pst);
 }
@@ -312,34 +313,36 @@ zhprs_getlexeme(PG_FUNCTION_ARGS)
 	int		   *tlen = (int *) PG_GETARG_POINTER(2);
 	int			type = -1;
 
-	if((pst -> head) == NULL ) /* already done the work,or no sentence */
+	/* already done the work, or no sentence */
+	if (pst->head == NULL)
 	{
 		*tlen = 0;
 		type = 0;
 	}
 	/* have results */
-	else if(pst -> curr != NULL)
+	else if (pst->curr != NULL)
 	{
-		scws_res_t  curr = pst -> curr;
+		scws_res_t curr = pst->curr;
 
 		/*
- 		* check the first char to determine the lextype
- 		* if out of [0,25],then set to 'x',mean unknown type 
- 		* so for Ag,Dg,Ng,Tg,Vg,the type will be unknown
- 		* for full attr explanation,visit http://www.xunsearch.com/scws/docs.php#attr
+		* check the first char to determine the lextype
+		* if out of [0,25],then set to 'x',mean unknown type
+		* so for Ag,Dg,Ng,Tg,Vg,the type will be unknown
+		* for full attr explanation,visit http://www.xunsearch.com/scws/docs.php#attr
 		*/
-		type = (int)(curr -> attr)[0];
-		if(type > (int)'x' || type < (int)'a')
-		    type = (int)'x';
-		*tlen = curr -> len;
-		*t = pst -> buffer + curr -> off;
+		type = (int)(curr->attr)[0];
+		if (type > (int)'x' || type < (int)'a')
+			type = (int)'x';
+		*tlen = curr->len;
+		*t = pst->buffer + curr->off;
 
-		pst -> curr = curr -> next;
+		pst->curr = curr->next;
 
 		/* fetch the next sentence */
-		if(pst -> curr == NULL ){
-			scws_free_result(pst -> head);
-			(pst -> head) =	(pst -> curr) = scws_get_result(pst -> scws);
+		if (pst->curr == NULL)
+		{
+			scws_free_result(pst->head);
+			pst->head = pst->curr = scws_get_result(pst->scws);
 		}
 	}
 
@@ -356,15 +359,19 @@ Datum
 zhprs_lextype(PG_FUNCTION_ARGS)
 {
 	static LexDescr   descr[27];
-	if(type_inited == 0){
-	    init_type(descr);
-	    type_inited = 1;
+
+	if (type_inited == 0)
+	{
+		init_type(descr);
+		type_inited = 1;
 	}
 
 	PG_RETURN_POINTER(descr);
 }
 
-static void init_type(LexDescr descr[]){
+static void
+init_type(LexDescr descr[])
+{
 	/* 
 	* there are 26 types in this parser,alias from a to z
 	* for full attr explanation,visit http://www.xunsearch.com/scws/docs.php#attr
