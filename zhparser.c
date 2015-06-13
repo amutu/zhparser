@@ -5,19 +5,13 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "zhparser.h"
-
 #include "postgres.h"
+
+#include "zhparser.h"
 #include "miscadmin.h"
-#include "fmgr.h"
 #include "utils/guc.h"
 #include "utils/builtins.h"
 
-/* dict file extension */
-#define TXT_EXT ".txt"
-#define XDB_EXT ".xdb"
-/* length of file extension */
-#define EXT_LEN 4
 
 PG_MODULE_MAGIC;
 
@@ -32,7 +26,7 @@ typedef struct
 	int			len;			/* length of the text in buffer */
 	int			pos;			/* position of the parser */
 	scws_t		scws;
-	scws_res_t	head;
+	scws_res_t	res;
 	scws_res_t	curr;
 } ParserState;
 
@@ -46,6 +40,10 @@ typedef struct
 
 static void zhprs_init();
 static void zhprs_init_type(LexDescr descr[]);
+static char *zhprs_get_tsearch_config_filename(const char *basename, const char *extension);
+
+void		_PG_init(void);
+void		_PG_fini(void);
 
 /*
  * prototypes
@@ -69,6 +67,9 @@ static ParserState parser_state;
 
 /* config */
 static bool zhprs_dict_in_memory = false;
+static int zhprs_load_dict_mem_mode = 0;
+
+static char * zhprs_rules = NULL;
 static char * zhprs_extra_dicts = NULL;
 
 static bool zhprs_punctuation_ignore = false;
@@ -78,17 +79,17 @@ static bool zhprs_multi_duality = false;
 static bool zhprs_multi_zmain = false;
 static bool zhprs_multi_zall = false;
 
+
+static void zhprs_assign_dict_in_memory(bool newval, void *extra);
+static bool zhprs_check_rules(char **newval, void **extra, GucSource source);
+static void zhprs_assign_rules(const char *newval, void *extra);
+static bool zhprs_check_extra_dicts(char **newval, void **extra, GucSource source);
+static void zhprs_assign_extra_dicts(const char *newval, void *extra);
+
+
 static void
 zhprs_init()
 {
-	char sharepath[MAXPGPATH];
-	char dict_path[MAXPGPATH];
-	char rule_path[MAXPGPATH];
-	int load_dict_mem_mode = 0x0;
-
-	List *elemlist;
-	ListCell *l;
-
 	scws = scws_new();
 	if (!scws)
 		ereport(ERROR,
@@ -96,6 +97,20 @@ zhprs_init()
 				 errmsg("Failed to init Chinese Parser Lib SCWS!\"%s\"",
 						 "")));
 	
+	scws_set_charset(scws, "utf-8");
+}
+
+/*
+ * Module load callback
+ */
+void
+_PG_init(void)
+{
+	if (scws)
+		return;
+
+	zhprs_init();
+
 	DefineCustomBoolVariable(
 		"zhparser.dict_in_memory",
 		"load dicts into memory",
@@ -105,7 +120,19 @@ zhprs_init()
 		PGC_BACKEND,
 		0,
 		NULL,
-		NULL,
+		zhprs_assign_dict_in_memory,
+		NULL
+		);
+	DefineCustomStringVariable(
+		"zhparser.rules",
+		"rules to load",
+		"rules to load",
+		&zhprs_rules,
+		"rules.utf8.ini",
+		PGC_BACKEND,
+		0,
+		zhprs_check_rules,
+		zhprs_assign_rules,
 		NULL
 		);
 	DefineCustomStringVariable(
@@ -113,13 +140,14 @@ zhprs_init()
 		"extra dicts files to load",
 		"extra dicts files to load",
 		&zhprs_extra_dicts,
-		NULL,
+		"dict.utf8.xdb",
 		PGC_BACKEND,
 		0,
-		NULL,
-		NULL,
+		zhprs_check_extra_dicts,
+		zhprs_assign_extra_dicts,
 		NULL
 		);
+
 	DefineCustomBoolVariable(
 		"zhparser.punctuation_ignore",
 		"set if zhparser ignores the puncuation",
@@ -193,76 +221,17 @@ zhprs_init()
 		NULL,
 		NULL
 		);
+}
 
-	get_share_path(my_exec_path, sharepath);
-	snprintf(dict_path, MAXPGPATH, "%s/tsearch_data/%s.%s",
-			sharepath, "dict.utf8", "xdb");
-	scws_set_charset(scws, "utf-8");
-
-	if (zhprs_dict_in_memory)
-		load_dict_mem_mode = SCWS_XDICT_MEM;
-
-	/* ignore error,default dict is xdb */
-	if (scws_set_dict(scws,dict_path,load_dict_mem_mode | SCWS_XDICT_XDB ) != 0)
-		ereport(NOTICE,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("zhparser set dict : \"%s\" failed!",
-						 dict_path)));
-
-	if (zhprs_extra_dicts != NULL)
-	{
-		if (!SplitIdentifierString(zhprs_extra_dicts, ',', &elemlist))
-		{
-			scws_free(scws);
-			list_free(elemlist);
-			scws = NULL;
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("zhparser.extra_dicts syntax error! extra_dicts is \"%s\"",
-							 zhprs_extra_dicts)));
-		}
-
-		foreach(l,elemlist)
-		{
-			char	   *tok = (char *) lfirst(l);
-
-			int load_dict_mode = load_dict_mem_mode;
-			char * ext = strrchr(tok, '.');
-			if (ext != NULL && strlen(ext) == EXT_LEN)
-			{
-				if (strncmp(ext,TXT_EXT,EXT_LEN) == 0)
-					load_dict_mode |= SCWS_XDICT_TXT;
-				else if (strncmp(ext,XDB_EXT,EXT_LEN) == 0)
-				load_dict_mode |= SCWS_XDICT_XDB;
-			}
-
-			if (((load_dict_mode & SCWS_XDICT_TXT) == 0) &&
-				((load_dict_mode & SCWS_XDICT_XDB) == 0))
-			{
-				scws_free(scws);
-				list_free(elemlist);
-				scws = NULL;
-				ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-						 errmsg("zhparser.extra_dicts setting error,the file name must end with .txt or .xdb! error file name is \"%s\"",
-								 tok)));
-			}
-
-			snprintf(dict_path, MAXPGPATH, "%s/tsearch_data/%s",
-					sharepath, tok);
-			/* ignore error*/
-			if (scws_add_dict(scws, dict_path, load_dict_mode) != 0)
-				ereport(NOTICE,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-						 errmsg("zhparser add dict : \"%s\" failed!",
-								 dict_path)));
-		}
-		list_free(elemlist);
-	}
-
-	snprintf(rule_path, MAXPGPATH, "%s/tsearch_data/%s.%s",
-			sharepath, "rules.utf8", "ini");
-	scws_set_rule(scws ,rule_path);
+/*
+ * Module unload callback
+ */
+void
+_PG_fini(void)
+{
+	if (scws)
+		scws_free(scws);
+	scws = NULL;
 }
 
 /*
@@ -274,15 +243,16 @@ zhprs_start(PG_FUNCTION_ARGS)
 	ParserState *pst = &parser_state;
 	int multi_mode = 0x0;
 
-	if (scws == NULL)
-		zhprs_init();
-	pst->scws = scws;
 	pst->buffer = (char *) PG_GETARG_POINTER(0);
 	pst->len = PG_GETARG_INT32(1);
 	pst->pos = 0;
 
-	scws_set_ignore(scws, (int)zhprs_punctuation_ignore);
-	scws_set_duality(scws,(int)zhprs_seg_with_duality);
+	pst->scws = scws;
+	pst->res = NULL;
+	pst->curr = NULL;
+
+	scws_set_ignore(scws, (int) zhprs_punctuation_ignore);
+	scws_set_duality(scws, (int) zhprs_seg_with_duality);
 
 	if (zhprs_multi_short)
 		multi_mode |= SCWS_MULTI_SHORT;
@@ -300,8 +270,6 @@ zhprs_start(PG_FUNCTION_ARGS)
 
 	scws_send_text(scws, pst->buffer, pst->len);
 
-	pst->head = pst->curr = scws_get_result(scws);
-
 	PG_RETURN_POINTER(pst);
 }
 
@@ -313,8 +281,11 @@ zhprs_getlexeme(PG_FUNCTION_ARGS)
 	int		   *tlen = (int *) PG_GETARG_POINTER(2);
 	int			type = -1;
 
+	if (pst->curr == NULL)
+		pst->res = pst->curr = scws_get_result(pst->scws);
+
 	/* already done the work, or no sentence */
-	if (pst->head == NULL)
+	if (pst->res == NULL)
 	{
 		*tlen = 0;
 		type = 0;
@@ -338,11 +309,11 @@ zhprs_getlexeme(PG_FUNCTION_ARGS)
 
 		pst->curr = curr->next;
 
-		/* fetch the next sentence */
+		/* clear for the next calling */
 		if (pst->curr == NULL)
 		{
-			scws_free_result(pst->head);
-			pst->head = pst->curr = scws_get_result(pst->scws);
+			scws_free_result(pst->res);
+			pst->res = NULL;
 		}
 	}
 
@@ -457,3 +428,230 @@ zhprs_init_type(LexDescr descr[])
 	descr[26].lexid = 0;
 }
 //TODO :headline function
+
+/*
+ * check_hook, assign_hook and show_hook subroutines
+ */
+static bool
+zhprs_check_rules(char **newval, void **extra, GucSource source)
+{
+	char	   *rawstring;
+	char	    *myextra;
+	char	    *ext;
+	char	    *rule_path;
+
+	if (strcmp(*newval, "none") == 0)
+		return true;
+
+	/* Need a modifiable copy of string */
+	rawstring = pstrdup(*newval);
+
+	ext = strrchr(rawstring, '.');
+	if (ext && pg_strcasecmp(ext, ".ini") == 0)
+	{
+		*ext = '\0';
+		ext++;
+		rule_path = zhprs_get_tsearch_config_filename(rawstring, ext);
+	}
+	else
+	{
+		GUC_check_errdetail("Unrecognized key word: \"%s\". Must end with .ini", rawstring);
+		pfree(rawstring);
+		return false;
+	}
+
+	myextra = strdup(rule_path);
+	*extra = (void *) myextra;
+	pfree(rule_path);
+
+	return true;
+}
+
+static void
+zhprs_assign_rules(const char *newval, void *extra)
+{
+	char *myextra = (char *) extra;
+
+	/* Do nothing for the boot_val default of NULL */
+	if (!extra)
+		return;
+
+	scws_set_rule(scws, myextra);
+}
+
+typedef struct
+{
+	int			mode;
+	char		path[MAXPGPATH];
+} dict_elem;
+
+/* This is the "extra" state */
+typedef struct
+{
+	int			num;
+	dict_elem	dicts[1];
+} dict_extra;
+
+static bool
+zhprs_check_extra_dicts(char **newval, void **extra, GucSource source)
+{
+	char	   *rawstring;
+	List	   *elemlist;
+	ListCell   *l;
+	dict_extra *myextra;
+	int			num;
+	int			i;
+
+	if (strcmp(*newval, "none") == 0)
+		return true;
+
+	/* Need a modifiable copy of string */
+	rawstring = pstrdup(*newval);
+
+	/* Parse string into list of identifiers */
+	if (!SplitIdentifierString(rawstring, ',', &elemlist))
+	{
+		/* syntax error in list */
+		GUC_check_errdetail("List syntax is invalid.");
+		pfree(rawstring);
+		list_free(elemlist);
+		return false;
+	}
+
+	num = list_length(elemlist);
+	myextra = (dict_extra *) malloc(sizeof(dict_extra) + num * sizeof(dict_elem));
+	if (!myextra)
+	{
+		GUC_check_errdetail("Out of memory. Too many dictionary");
+		pfree(rawstring);
+		list_free(elemlist);
+		return false;
+	}
+
+	i = 0;
+	foreach(l, elemlist)
+	{
+		char	   *tok = (char *) lfirst(l);
+		char	   *dict_path;
+
+		int load_dict_mode = zhprs_load_dict_mem_mode;
+		char * ext = strrchr(tok, '.');
+		if (ext && strlen(ext) == 4)
+		{
+			if (pg_strcasecmp(ext, ".txt") == 0)
+				load_dict_mode |= SCWS_XDICT_TXT;
+			else if(pg_strcasecmp(ext, ".xdb") == 0)
+				load_dict_mode |= SCWS_XDICT_XDB;
+			else
+			{
+				GUC_check_errdetail("Unrecognized key word: \"%s\". Must end with .txt or .xdb", tok);
+				pfree(rawstring);
+				list_free(elemlist);
+				free(myextra);
+				return false;
+			}
+
+			*ext = '\0';
+			ext++;
+		}
+		else
+		{
+			GUC_check_errdetail("Unrecognized key word: \"%s\". Must end with .txt or .xdb", tok);
+			pfree(rawstring);
+			list_free(elemlist);
+			free(myextra);
+			return false;
+		}
+
+		dict_path = zhprs_get_tsearch_config_filename(tok, ext);
+
+		memcpy(myextra->dicts[i].path, dict_path, MAXPGPATH);
+		myextra->dicts[i].mode = load_dict_mode;
+		i++;
+	}
+	myextra->num = i;
+	*extra = (void *) myextra;
+
+	pfree(rawstring);
+	list_free(elemlist);
+
+	return true;
+}
+
+static void
+zhprs_assign_extra_dicts(const char *newval, void *extra)
+{
+	dict_extra *myextra = (dict_extra *) extra;
+	int i;
+
+	/* Do nothing for the boot_val default of NULL */
+	if (!extra)
+		return;
+
+	for (i = 0; i < myextra->num; i++)
+	{
+		int err;
+		char	*dict_path = myextra->dicts[i].path;
+		int		mode = myextra->dicts[i].mode;
+
+		if (i == 0)
+			err = scws_set_dict(scws, dict_path, mode);
+		else
+			err = scws_add_dict(scws, dict_path, mode);
+
+		/* ignore error*/
+		if (err != 0)
+			ereport(NOTICE,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("zhparser add dict : \"%s\" failed!",
+						 dict_path)));
+	}
+}
+
+static void
+zhprs_assign_dict_in_memory(bool newval, void *extra)
+{
+	if (newval)
+		zhprs_load_dict_mem_mode = SCWS_XDICT_MEM;
+	else
+		zhprs_load_dict_mem_mode = 0;
+}
+
+
+/*
+ * Given the base name and extension of a tsearch config file, return
+ * its full path name.	The base name is assumed to be user-supplied,
+ * and is checked to prevent pathname attacks.	The extension is assumed
+ * to be safe.
+ *
+ * The result is a palloc'd string.
+ */
+static char *
+zhprs_get_tsearch_config_filename(const char *basename,
+							const char *extension)
+{
+	char		sharepath[MAXPGPATH];
+	char	   *result;
+
+	/*
+	 * We limit the basename to contain a-z, 0-9, and underscores.	This may
+	 * be overly restrictive, but we don't want to allow access to anything
+	 * outside the tsearch_data directory, so for instance '/' *must* be
+	 * rejected, and on some platforms '\' and ':' are risky as well. Allowing
+	 * uppercase might result in incompatible behavior between case-sensitive
+	 * and case-insensitive filesystems, and non-ASCII characters create other
+	 * interesting risks, so on the whole a tight policy seems best.
+	 */
+	if (strspn(basename, "abcdefghijklmnopqrstuvwxyz0123456789_.") != strlen(basename))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid text search configuration file name \"%s\"",
+						basename)));
+
+	get_share_path(my_exec_path, sharepath);
+	result = palloc(MAXPGPATH);
+	snprintf(result, MAXPGPATH, "%s/tsearch_data/%s.%s",
+			 sharepath, basename, extension);
+
+	return result;
+}
