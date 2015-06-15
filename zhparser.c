@@ -73,11 +73,8 @@ static char * zhprs_extra_dicts = NULL;
 
 static bool zhprs_punctuation_ignore = false;
 static bool zhprs_seg_with_duality = false;
-static bool zhprs_multi_short = false;
-static bool zhprs_multi_duality = false;
-static bool zhprs_multi_zmain = false;
-static bool zhprs_multi_zall = false;
-
+static char * zhprs_multi_mode_string = NULL;
+static int zhprs_multi_mode = 0;
 
 static void zhprs_assign_dict_in_memory(bool newval, void *extra);
 static bool zhprs_check_charset(char **newval, void **extra, GucSource source);
@@ -86,6 +83,8 @@ static bool zhprs_check_rules(char **newval, void **extra, GucSource source);
 static void zhprs_assign_rules(const char *newval, void *extra);
 static bool zhprs_check_extra_dicts(char **newval, void **extra, GucSource source);
 static void zhprs_assign_extra_dicts(const char *newval, void *extra);
+static bool zhprs_check_multi_mode(char **newval, void **extra, GucSource source);
+static void zhprs_assign_multi_mode(const char *newval, void *extra);
 
 
 static void
@@ -110,128 +109,80 @@ _PG_init(void)
 
 	zhprs_init();
 
-	DefineCustomBoolVariable(
-		"zhparser.dict_in_memory",
-		"load dicts into memory",
-		"load dicts into memory",
-		&zhprs_dict_in_memory,
-		false,
-		PGC_BACKEND,
-		0,
-		NULL,
-		zhprs_assign_dict_in_memory,
-		NULL
-		);
-	DefineCustomStringVariable(
-		"zhparser.charset",
-		"charset",
-		NULL,
-		&zhprs_charset,
-		"utf8",
-		PGC_BACKEND,
-		0,
-		zhprs_check_charset,
-		zhprs_assign_charset,
-		NULL
-		);
-	DefineCustomStringVariable(
-		"zhparser.rules",
-		"rules to load",
-		"rules to load",
-		&zhprs_rules,
-		"rules.utf8.ini",
-		PGC_BACKEND,
-		0,
-		zhprs_check_rules,
-		zhprs_assign_rules,
-		NULL
-		);
-	DefineCustomStringVariable(
-		"zhparser.extra_dicts",
-		"extra dicts files to load",
-		"extra dicts files to load",
-		&zhprs_extra_dicts,
-		"dict.utf8.xdb",
-		PGC_BACKEND,
-		0,
-		zhprs_check_extra_dicts,
-		zhprs_assign_extra_dicts,
-		NULL
-		);
+	DefineCustomBoolVariable("zhparser.dict_in_memory",
+							 "load dicts into memory",
+							 NULL,
+							 &zhprs_dict_in_memory,
+							 false,
+							 PGC_BACKEND,
+							 0,
+							 NULL,
+							 zhprs_assign_dict_in_memory,
+							 NULL);
+	DefineCustomStringVariable("zhparser.charset",
+							   "charset",
+							   NULL,
+							   &zhprs_charset,
+							   "utf8",
+							   PGC_BACKEND,
+							   0,
+							   zhprs_check_charset,
+							   zhprs_assign_charset,
+							   NULL);
+	DefineCustomStringVariable("zhparser.rules",
+							   "rules to load",
+							   NULL,
+							   &zhprs_rules,
+							   "rules.utf8.ini",
+							   PGC_BACKEND,
+							   0,
+							   zhprs_check_rules,
+							   zhprs_assign_rules,
+							   NULL);
+	DefineCustomStringVariable("zhparser.extra_dicts",
+							   "extra dicts files to load",
+							   NULL,
+							   &zhprs_extra_dicts,
+							   "dict.utf8.xdb",
+							   PGC_BACKEND,
+							   0,
+							   zhprs_check_extra_dicts,
+							   zhprs_assign_extra_dicts,
+							   NULL);
 
-	DefineCustomBoolVariable(
-		"zhparser.punctuation_ignore",
-		"set if zhparser ignores the puncuation",
-		"set if zhparser ignores the puncuation,except \\r and \\n",
-		&zhprs_punctuation_ignore,
-		false,
-		PGC_USERSET,
-		0,
-		NULL,
-		NULL,
-		NULL
-		);
-
-	DefineCustomBoolVariable(
-		"zhparser.seg_with_duality",
-		"segment words with duality",
-		"segment words with duality",
-		&zhprs_seg_with_duality,
-		false,
-		PGC_USERSET,
-		0,
-		NULL,
-		NULL,
-		NULL
-		);
-	DefineCustomBoolVariable(
-		"zhparser.multi_short",
-		"prefer short words",
-		"prefer short words",
-		&zhprs_multi_short,
-		false,
-		PGC_USERSET,
-		0,
-		NULL,
-		NULL,
-		NULL
-		);
-	DefineCustomBoolVariable(
-		"zhparser.multi_duality",
-		"prefer duality",
-		"prefer duality",
-		&zhprs_multi_duality,
-		false,
-		PGC_USERSET,
-		0,
-		NULL,
-		NULL,
-		NULL
-		);
-	DefineCustomBoolVariable(
-		"zhparser.multi_zmain",
-		"prefer most important element",
-		"prefer most important element",
-		&zhprs_multi_zmain,
-		false,
-		PGC_USERSET,
-		0,
-		NULL,
-		NULL,
-		NULL
-		);
-	DefineCustomBoolVariable(
-		"zhparser.multi_zall",
-		"prefer all element",
-		"prefer all element",
-		&zhprs_multi_zall,
-		false,
-		PGC_USERSET,
-		0,
-		NULL,
-		NULL,
-		NULL
-		);
+	DefineCustomBoolVariable("zhparser.punctuation_ignore",
+							 "set if zhparser ignores the puncuation",
+							 "set if zhparser ignores the puncuation, except \\r and \\n",
+							 &zhprs_punctuation_ignore,
+							 false,
+							 PGC_USERSET,
+							 0,
+							 NULL,
+							 NULL,
+							 NULL);
+	DefineCustomBoolVariable("zhparser.seg_with_duality",
+							 "segment words with duality",
+							 NULL,
+							 &zhprs_seg_with_duality,
+							 false,
+							 PGC_USERSET,
+							 0,
+							 NULL,
+							 NULL,
+							 NULL);
+	DefineCustomStringVariable("zhparser.multi_mode",
+							   "set multi mode",
+							   "short for prefer short words\n"
+							   "duality for prefer duality\n"
+							   "zmain prefer most important element"
+							   "zall prefer prefer all element",
+							   &zhprs_multi_mode_string,
+							   NULL,
+							   PGC_USERSET,
+							   0,
+							   zhprs_check_multi_mode,
+							   zhprs_assign_multi_mode,
+							   NULL);
 }
 
 /*
@@ -252,7 +203,6 @@ Datum
 zhprs_start(PG_FUNCTION_ARGS)
 {
 	ParserState *pst = (ParserState *) palloc0(sizeof(ParserState));
-	int multi_mode = 0x0;
 	scws_t scws = scws_fork(zhprs_scws);
 
 	pst->buffer = (char *) PG_GETARG_POINTER(0);
@@ -265,20 +215,7 @@ zhprs_start(PG_FUNCTION_ARGS)
 
 	scws_set_ignore(scws, (int) zhprs_punctuation_ignore);
 	scws_set_duality(scws, (int) zhprs_seg_with_duality);
-
-	if (zhprs_multi_short)
-		multi_mode |= SCWS_MULTI_SHORT;
-
-	if (zhprs_multi_duality)
-		multi_mode |= SCWS_MULTI_DUALITY;
-
-	if (zhprs_multi_zmain)
-		multi_mode |= SCWS_MULTI_ZMAIN;
-
-	if (zhprs_multi_zall)
-		multi_mode |= SCWS_MULTI_ZALL;
-
-	scws_set_multi(scws, multi_mode);
+	scws_set_multi(scws, zhprs_multi_mode);
 
 	scws_send_text(scws, pst->buffer, pst->len);
 
@@ -645,6 +582,74 @@ zhprs_assign_extra_dicts(const char *newval, void *extra)
 				 errmsg("zhparser add dict : \"%s\" failed!",
 						 dict_path)));
 	}
+}
+
+static bool
+zhprs_check_multi_mode(char **newval, void **extra, GucSource source)
+{
+	char	   *rawstring;
+	List	   *elemlist;
+	ListCell   *l;
+	int			new_multi_mode = 0;
+	int		   *myextra;
+
+	if (*newval)
+	{
+		/* Need a modifiable copy of string */
+		rawstring = pstrdup(*newval);
+
+		/* Parse string into list of identifiers */
+		if (!SplitIdentifierString(rawstring, ',', &elemlist))
+		{
+			/* syntax error in list */
+			GUC_check_errdetail("List syntax is invalid.");
+			pfree(rawstring);
+			list_free(elemlist);
+			return false;
+		}
+
+		foreach(l, elemlist)
+		{
+			char	   *tok = (char *) lfirst(l);
+
+			if (pg_strcasecmp(tok, "short") == 0)
+				new_multi_mode |= SCWS_MULTI_SHORT;
+			else if (pg_strcasecmp(tok, "duality") == 0)
+				new_multi_mode |= SCWS_MULTI_DUALITY;
+			else if (pg_strcasecmp(tok, "zmain") == 0)
+				new_multi_mode |= SCWS_MULTI_ZMAIN;
+			else if (pg_strcasecmp(tok, "zall") == 0)
+				new_multi_mode |= SCWS_MULTI_ZALL;
+			else
+			{
+				GUC_check_errdetail("Unrecognized key word: \"%s\".", tok);
+				pfree(rawstring);
+				list_free(elemlist);
+				return false;
+			}
+		}
+
+		pfree(rawstring);
+		list_free(elemlist);
+	}
+
+	myextra = (int *) malloc(sizeof(int));
+	if (!myextra)
+	{
+		GUC_check_errdetail("Out of memory");
+		return false;
+	}
+
+	*myextra = new_multi_mode;
+	*extra = (void *) myextra;
+
+	return true;
+}
+
+static void
+zhprs_assign_multi_mode(const char *newval, void *extra)
+{
+	zhprs_multi_mode = *((int *) extra);
 }
 
 static void
