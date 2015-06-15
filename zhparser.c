@@ -68,6 +68,7 @@ static ParserState parser_state;
 static bool zhprs_dict_in_memory = false;
 static int zhprs_load_dict_mem_mode = 0;
 
+static char * zhprs_charset = NULL;
 static char * zhprs_rules = NULL;
 static char * zhprs_extra_dicts = NULL;
 
@@ -80,6 +81,8 @@ static bool zhprs_multi_zall = false;
 
 
 static void zhprs_assign_dict_in_memory(bool newval, void *extra);
+static bool zhprs_check_charset(char **newval, void **extra, GucSource source);
+static void zhprs_assign_charset(const char *newval, void *extra);
 static bool zhprs_check_rules(char **newval, void **extra, GucSource source);
 static void zhprs_assign_rules(const char *newval, void *extra);
 static bool zhprs_check_extra_dicts(char **newval, void **extra, GucSource source);
@@ -95,8 +98,6 @@ zhprs_init()
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("Failed to init Chinese Parser Lib SCWS!\"%s\"",
 						 "")));
-	
-	scws_set_charset(scws, "utf-8");
 }
 
 /*
@@ -120,6 +121,18 @@ _PG_init(void)
 		0,
 		NULL,
 		zhprs_assign_dict_in_memory,
+		NULL
+		);
+	DefineCustomStringVariable(
+		"zhparser.charset",
+		"charset",
+		NULL,
+		&zhprs_charset,
+		"utf8",
+		PGC_BACKEND,
+		0,
+		zhprs_check_charset,
+		zhprs_assign_charset,
 		NULL
 		);
 	DefineCustomStringVariable(
@@ -432,6 +445,27 @@ zhprs_init_type(LexDescr descr[])
 /*
  * check_hook, assign_hook and show_hook subroutines
  */
+static bool
+zhprs_check_charset(char **newval, void **extra, GucSource source)
+{
+	char* string = *newval;
+
+	if (pg_strcasecmp(string, "gbk") != 0 &&
+		pg_strcasecmp(string, "utf8") != 0)
+	{
+		GUC_check_errdetail("Charset: \"%s\". Only Support \"gbk\" or \"utf8\"", string);
+		return false;
+	}
+
+	return true;
+}
+
+static void
+zhprs_assign_charset(const char *newval, void *extra)
+{
+	scws_set_charset(scws, newval);
+}
+
 static bool
 zhprs_check_rules(char **newval, void **extra, GucSource source)
 {
