@@ -61,7 +61,7 @@ PG_FUNCTION_INFO_V1(zhprs_lextype);
 Datum		zhprs_lextype(PG_FUNCTION_ARGS);
 
 
-static scws_t scws = NULL;
+static scws_t zhprs_scws = NULL;
 
 /* config */
 static bool zhprs_dict_in_memory = false;
@@ -91,8 +91,8 @@ static void zhprs_assign_extra_dicts(const char *newval, void *extra);
 static void
 zhprs_init()
 {
-	scws = scws_new();
-	if (!scws)
+	zhprs_scws = scws_new();
+	if (!zhprs_scws)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("Failed to init Chinese Parser Lib SCWS!\"%s\"",
@@ -105,7 +105,7 @@ zhprs_init()
 void
 _PG_init(void)
 {
-	if (scws)
+	if (zhprs_scws)
 		return;
 
 	zhprs_init();
@@ -240,9 +240,9 @@ _PG_init(void)
 void
 _PG_fini(void)
 {
-	if (scws)
-		scws_free(scws);
-	scws = NULL;
+	if (zhprs_scws)
+		scws_free(zhprs_scws);
+	zhprs_scws = NULL;
 }
 
 /*
@@ -253,6 +253,7 @@ zhprs_start(PG_FUNCTION_ARGS)
 {
 	ParserState *pst = (ParserState *) palloc0(sizeof(ParserState));
 	int multi_mode = 0x0;
+	scws_t scws = scws_fork(zhprs_scws);
 
 	pst->buffer = (char *) PG_GETARG_POINTER(0);
 	pst->len = PG_GETARG_INT32(1);
@@ -336,6 +337,8 @@ zhprs_end(PG_FUNCTION_ARGS)
 {
 	ParserState *pst = (ParserState *) PG_GETARG_POINTER(0);
 
+	if (pst->scws)
+		scws_free(pst->scws);
 	pfree(pst);
 	PG_RETURN_VOID();
 }
@@ -465,7 +468,7 @@ zhprs_check_charset(char **newval, void **extra, GucSource source)
 static void
 zhprs_assign_charset(const char *newval, void *extra)
 {
-	scws_set_charset(scws, newval);
+	scws_set_charset(zhprs_scws, newval);
 }
 
 static bool
@@ -512,7 +515,7 @@ zhprs_assign_rules(const char *newval, void *extra)
 	if (!extra)
 		return;
 
-	scws_set_rule(scws, myextra);
+	scws_set_rule(zhprs_scws, myextra);
 }
 
 typedef struct
@@ -631,9 +634,9 @@ zhprs_assign_extra_dicts(const char *newval, void *extra)
 		int		mode = myextra->dicts[i].mode;
 
 		if (i == 0)
-			err = scws_set_dict(scws, dict_path, mode);
+			err = scws_set_dict(zhprs_scws, dict_path, mode);
 		else
-			err = scws_add_dict(scws, dict_path, mode);
+			err = scws_add_dict(zhprs_scws, dict_path, mode);
 
 		/* ignore error*/
 		if (err != 0)
