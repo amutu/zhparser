@@ -62,7 +62,6 @@ Datum		zhprs_lextype(PG_FUNCTION_ARGS);
 
 
 static scws_t scws = NULL;
-static bool type_inited = false;
 static ParserState parser_state;
 
 /* config */
@@ -330,11 +329,12 @@ Datum
 zhprs_lextype(PG_FUNCTION_ARGS)
 {
 	static LexDescr   descr[27];
+	static LexDescr   *descr_inst = NULL;
 
-	if (type_inited == 0)
+	if (!descr_inst)
 	{
 		zhprs_init_type(descr);
-		type_inited = 1;
+		descr_inst = descr;
 	}
 
 	PG_RETURN_POINTER(descr);
