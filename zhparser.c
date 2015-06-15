@@ -62,7 +62,6 @@ Datum		zhprs_lextype(PG_FUNCTION_ARGS);
 
 
 static scws_t scws = NULL;
-static ParserState parser_state;
 
 /* config */
 static bool zhprs_dict_in_memory = false;
@@ -252,7 +251,7 @@ _PG_fini(void)
 Datum
 zhprs_start(PG_FUNCTION_ARGS)
 {
-	ParserState *pst = &parser_state;
+	ParserState *pst = (ParserState *) palloc0(sizeof(ParserState));
 	int multi_mode = 0x0;
 
 	pst->buffer = (char *) PG_GETARG_POINTER(0);
@@ -335,6 +334,9 @@ zhprs_getlexeme(PG_FUNCTION_ARGS)
 Datum
 zhprs_end(PG_FUNCTION_ARGS)
 {
+	ParserState *pst = (ParserState *) PG_GETARG_POINTER(0);
+
+	pfree(pst);
 	PG_RETURN_VOID();
 }
 
