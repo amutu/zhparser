@@ -63,7 +63,6 @@ PG_FUNCTION_INFO_V1(zhprs_lextype);
 Datum		zhprs_lextype(PG_FUNCTION_ARGS);
 
 static scws_t scws = NULL;
-static bool type_inited = false;
 static ParserState parser_state;
 
 /* config */
@@ -355,11 +354,8 @@ zhprs_end(PG_FUNCTION_ARGS)
 Datum
 zhprs_lextype(PG_FUNCTION_ARGS)
 {
-	static LexDescr   descr[27];
-	if(type_inited == 0){
-	    init_type(descr);
-	    type_inited = 1;
-	}
+	LexDescr *descr = (LexDescr *) palloc(sizeof(LexDescr) * (26 + 1));
+	init_type(descr);
 
 	PG_RETURN_POINTER(descr);
 }
