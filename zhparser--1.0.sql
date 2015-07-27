@@ -25,3 +25,9 @@ CREATE TEXT SEARCH PARSER zhparser (
     HEADLINE = pg_catalog.prsd_headline,
     LEXTYPES = zhprs_lextype
 );
+
+CREATE TEXT SEARCH CONFIGURATION chinesecfg (PARSER = zhparser);
+
+COMMENT ON TEXT SEARCH CONFIGURATION chinesecfg IS 'configuration for chinese language';
+
+ALTER TEXT SEARCH CONFIGURATION chinesecfg ADD MAPPING FOR n,v,a,i,e,l WITH simple;
