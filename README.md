@@ -4,7 +4,7 @@ Zhparser
 Zhparser is a PostgreSQL extension for full-text search of Chinese.It implements a Chinese parser base on 
 the Simple Chinese Word Segmentation(SCWS).
 
-Project home page：http://amutu.com/blog/zhparser/
+Project home page：http://blog.amutu.com/zhparser/
 
 INSTALL
 -------
