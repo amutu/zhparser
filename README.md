@@ -54,18 +54,25 @@ CONFIGURATION
 -------
 以下配置在PG9.2及以上版本使用,这些选项是用来控制字典加载行为和分词行为的,这些选项都不是必须的,默认都为false(即如果没有在配置文件中设置这些选项，则zhparser的行为与将下面的选项设置为false一致)。
 
+忽略所有的标点等特殊符号: 
 zhparser.punctuation_ignore = f 
 
+闲散文字自动以二字分词法聚合: 
 zhparser.seg_with_duality = f 
 
+将词典全部加载到内存里: 
 zhparser.dict_in_memory = f 
 
+短词复合: 
 zhparser.multi_short = f 
 
+散字二元复合: 
 zhparser.multi_duality = f 
 
+重要单字复合: 
 zhparser.multi_zmain = f 
 
+全部单字复合: 
 zhparser.multi_zall = f 
 
 除了zhparser自带的词典，用户可以增加自定义词典，自定义词典的优先级高于自带的词典。自定义词典的文件必须放在share/postgresql/tsearch_data目录中,zhparser根据文件扩展名确定词典的格式类型，.txt扩展名表示词典是文本格式，.xdb扩展名表示这个词典是xdb格式，多个文件使用逗号分隔,词典的分词优先级由低到高,如：  
