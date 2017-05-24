@@ -116,7 +116,7 @@ SELECT to_tsquery('testzhcfg', '保障房资金压力');
 
 5) 删除词作法，请将词性设为“!“，则表示该词设为无效，即使在其它核心库中存在该词也视为无效 
 
-注意：自定义词典的格式可以是文本TXT，也可以是二进制的XDB格式。XDB格式效率更高，适合大辞典使用。可以使用scws自带的工具scws-gen-dict将文本词典转换为XDB格式。具体参见：http://www.xunsearch.com/scws/docs.php#utilscws 
+注意：1.自定义词典的格式可以是文本TXT，也可以是二进制的XDB格式。XDB格式效率更高，适合大辞典使用。可以使用scws自带的工具scws-gen-dict将文本词典转换为XDB格式；2.zhparser默认的词典是简体中文，如果需要繁体中文，可以在这里下载已经生成好的XDB格式此词典：http://www.xunsearch.com/scws/download.php。更多信息参见：http://www.xunsearch.com/scws/docs.php#utilscws 
 
 COPYRITE
 --------
