@@ -123,7 +123,7 @@ COPYRITE
 
 zhparser
 
-Portions Copyright (c) 2012-2013, Jov(amutu@amutu.com)
+Portions Copyright (c) 2012-2017, Jov(amutu@amutu.com)
 
 Permission to use, copy, modify, and distribute this software and its documentation
 for any purpose, without fee, and without a written agreement is hereby granted,
