@@ -11,9 +11,9 @@ INSTALL
 1.安装SCWS
 
 ```
- wget -q -O - http://www.xunsearch.com/scws/down/scws-1.2.2.tar.bz2 | tar xf -
+ wget -q -O - http://www.xunsearch.com/scws/down/scws-1.2.3.tar.bz2 | tar xf -
 
- cd scws-1.2.2 ; ./configure ; make install
+ cd scws-1.2.3 ; ./configure ; make install
 
 注意:在FreeBSD release 10及以上版本上运行configure时，需要增加--with-pic选项。
 
