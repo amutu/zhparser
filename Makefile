@@ -12,6 +12,6 @@ REGRESS = zhparser
 PG_CPPFLAGS = -I$(SCWS_HOME)/include/scws 
 SHLIB_LINK = -lscws -L$(SCWS_HOME)/lib -Wl,-rpath -Wl,$(SCWS_HOME)/lib
 
-PG_CONFIG = pg_config
+PG_CONFIG ?= pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)

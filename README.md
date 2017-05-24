@@ -34,6 +34,13 @@ INSTALL
  SCWS_HOME=/usr/local make && make install
 
 ```
+如果你同时安装了多个版本的PostgreSQL, 可以通过指定 PG\_CONFIG 来为指定的版本编译扩展：
+
+```
+ PG_CONFIG=/usr/lib/postgresql/9.5/bin/pg_config make && make install
+
+```
+
 注意:在*BSD上编译安装时，使用gmake代替make
 
 4.创建extension
