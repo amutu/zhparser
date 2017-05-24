@@ -59,7 +59,9 @@ SELECT * FROM ts_parse('zhparser', 'hello world! 2010年保障房建设在全国
    110 | 书记
    117 | 、
    110 | 部长
-   110 | 姜伟新
+   110 | 姜
+   110 | 伟
+    97 | 新
    116 | 去年底
    112 | 在
    110 | 全国
@@ -77,7 +79,7 @@ SELECT * FROM ts_parse('zhparser', 'hello world! 2010年保障房建设在全国
    118 | 安居
    110 | 工程建设
    117 | 。
-(71 rows)
+(73 rows)
 
 SELECT to_tsvector('testzhcfg','“今年保障房新开工数量虽然有所下调，但实际的年度在建规模以及竣工规模会超以往年份，相对应的对资金的需求也会创历史纪录。”陈国强说。在他看来，与2011年相比，2012年的保障房建设在资金配套上的压力将更为严峻。');
                                                                                                                                                               to_tsvector                                                                                                                                                              
@@ -91,3 +93,5 @@ SELECT to_tsquery('testzhcfg', '保障房资金压力');
  '保障' & '房' & '资金' & '压力'
 (1 row)
 
+-- clean extension
+DROP EXTENSION zhparser CASCADE;

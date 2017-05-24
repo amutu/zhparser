@@ -14,3 +14,6 @@ SELECT to_tsvector('testzhcfg','“今年保障房新开工数量虽然有所下
 
 SELECT to_tsquery('testzhcfg', '保障房资金压力');
 
+-- clean extension
+
+DROP EXTENSION zhparser CASCADE;
