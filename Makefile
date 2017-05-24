@@ -1,4 +1,4 @@
-# contrib/zh_parser/Makefile
+# contrib/zhparser/Makefile
 
 MODULE_big = zhparser
 OBJS = zhparser.o
