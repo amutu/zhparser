@@ -9,6 +9,7 @@ DATA_TSEARCH = dict.utf8.xdb rules.utf8.ini
 
 REGRESS = zhparser
 
+SCWS_HOME ?= /usr/local
 PG_CPPFLAGS = -I$(SCWS_HOME)/include/scws 
 SHLIB_LINK = -lscws -L$(SCWS_HOME)/lib -Wl,-rpath -Wl,$(SCWS_HOME)/lib
 
