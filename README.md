@@ -11,7 +11,7 @@ INSTALL
 0.前置条件
 
 zhparser支持PostgreSQL 9.2及以上版本，请确保你的PG版本符合要求。 
-对于REDHAT/CentOS Linux系统，请确保安装了相关的库和头文件，一般他们在postgresql-devel软件包中。 
+对于REDHAT/CentOS Linux系统，请确保安装了相关的库和头文件，一般它们在postgresql-devel软件包中。 
 
 1.安装SCWS
 
