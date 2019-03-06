@@ -1,3 +1,6 @@
+2.0 (2019-03-05)
+-- support custom word in table zhparser.zhprs_custom_word
+
 0.2.0 (2017-05-28)
 -- fix regression test
 -- make pg_config configurable
