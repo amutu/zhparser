@@ -136,7 +136,8 @@ SELECT to_tsquery('testzhcfg', '保障房资金压力');
 
 
 自定义词库需要superuser权限, 自定义库是数据库级别的(不是实例),每个数据库拥有自己的自定义分词, 并存储在data目录下base/数据库ID下(2.0 版本存储在share/tsearch_data下)
-版本升级：
+
+生成环境版本升级(新环境直接安装就可以)：
 	alter extension zhparser update ;
 ```
 test=# SELECT * FROM ts_parse('zhparser', '保障房资金压力');
