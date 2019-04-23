@@ -63,9 +63,6 @@ Datum		zhprs_end(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(zhprs_lextype);
 Datum		zhprs_lextype(PG_FUNCTION_ARGS);
 
-PG_FUNCTION_INFO_V1(zhprs_getsharepath);
-Datum		zhprs_getsharepath(PG_FUNCTION_ARGS);
-
 static scws_t scws = NULL;
 static ParserState parser_state;
 
@@ -210,9 +207,9 @@ static void init(){
 			 )));
 	}
 
-	snprintf(dict_path, MAXPGPATH, "%s/tsearch_data/qc_dict_%s.txt",
-			sharepath, get_database_name(MyDatabaseId));
-	if( scws_add_dict(scws,dict_path,load_dict_mem_mode | SCWS_XDICT_TXT) != 0 ){
+	snprintf(dict_path, MAXPGPATH, "%s/base/%u/zhprs_dict_%s.txt",
+			DataDir, MyDatabaseId, get_database_name(MyDatabaseId));
+	if(scws_add_dict(scws, dict_path, load_dict_mem_mode | SCWS_XDICT_TXT) != 0 ){
 		ereport(NOTICE,
 			    (errcode(ERRCODE_INTERNAL_ERROR),
 			     errmsg("zhparser add dict : \"%s\" failed!",dict_path
@@ -275,14 +272,6 @@ static void init(){
 /*
  * functions
  */
-Datum
-zhprs_getsharepath(PG_FUNCTION_ARGS)
-{
-	char sharepath[MAXPGPATH];
-
-	get_share_path(my_exec_path, sharepath);
-    PG_RETURN_TEXT_P(cstring_to_text(sharepath));
-}
 
 Datum
 zhprs_start(PG_FUNCTION_ARGS)

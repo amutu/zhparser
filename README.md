@@ -130,12 +130,14 @@ SELECT to_tsquery('testzhcfg', '保障房资金压力');
 
 注意：1.自定义词典的格式可以是文本TXT，也可以是二进制的XDB格式。XDB格式效率更高，适合大辞典使用。可以使用scws自带的工具scws-gen-dict将文本词典转换为XDB格式；2.zhparser默认的词典是简体中文，如果需要繁体中文，可以在[这里](http://www.xunsearch.com/scws/download.php)下载已经生成好的XDB格式此词典。3.自定义词典的例子可以参考[dict_extra.txt](https://github.com/amutu/zhparser/blob/master/dict_extra.txt)。更多信息参见[SCWS官方文档](http://www.xunsearch.com/scws/docs.php#utilscws)。
 
-自定义词库 2.0
+自定义词库 2.1
 -------
-** 自定义词库2.0 增加自定义词库的易容性, 并兼容1.0提供的功能 **
+** 自定义词库2.1 增加自定义词库的易容性, 并兼容1.0提供的功能 **
 
 
-自定义词库需要superuser权限, 自定义库是数据库级别的(不是实例),每个数据库拥有自己的自定义分词
+自定义词库需要superuser权限, 自定义库是数据库级别的(不是实例),每个数据库拥有自己的自定义分词, 并存储在data目录下base/数据库ID下(2.0 版本存储在share/tsearch_data下)
+版本升级：
+	alter extension zhparser update ;
 ```
 test=# SELECT * FROM ts_parse('zhparser', '保障房资金压力');
  tokid | token

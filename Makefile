@@ -5,7 +5,8 @@ OBJS = zhparser.o
 
 EXTENSION = zhparser
 DATA = zhparser--1.0.sql zhparser--unpackaged--1.0.sql \
-	   zhparser--1.0--2.0.sql zhparser--2.0.sql
+	   zhparser--1.0--2.0.sql zhparser--2.0.sql \
+	   zhparser--2.0--2.1.sql zhparser--2.1.sql
 DATA_TSEARCH = dict.utf8.xdb rules.utf8.ini
 
 REGRESS = zhparser

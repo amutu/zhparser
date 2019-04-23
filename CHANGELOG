@@ -1,3 +1,6 @@
+2.1 (2019-04-23)
+-- custom word store in DataDir.
+
 2.0 (2019-03-05)
 -- support custom word in table zhparser.zhprs_custom_word
 
