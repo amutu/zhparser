@@ -12,6 +12,7 @@
 #include "fmgr.h"
 #include "utils/guc.h"
 #include "utils/builtins.h"
+#include "utils/varlena.h"
 #include "commands/dbcommands.h"
 
 /* dict file extension */
