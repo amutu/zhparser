@@ -12,7 +12,11 @@
 #include "fmgr.h"
 #include "utils/guc.h"
 #include "utils/builtins.h"
+
+#if PG_VERSION_NUM >= 100000
 #include "utils/varlena.h"
+#endif
+
 #include "commands/dbcommands.h"
 
 /* dict file extension */
