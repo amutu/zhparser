@@ -39,8 +39,10 @@ declare
 	time_tag_path text;
 	query text;
 begin
-	select setting from pg_settings where name='data_directory' into data_dir;
+	-- select setting from pg_settings where name='data_directory' into data_dir;
+	select datadir from gp_segment_configuration where content = (select setting::int from pg_settings where "name" = 'gp_contentid') into data_dir;
 	select oid from pg_database where datname=current_database() into database_oid;
+	
 
 
 	select data_dir || '/base/' || database_oid || '/zhprs_dict_' || current_database() || '.txt' into dict_path;
