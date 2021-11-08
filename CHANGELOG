@@ -1,3 +1,6 @@
+2.2 (2021-11-08)
+-- move custom word from /base/${DATABASE_ID}/zhprs_dict_${DATABASE_NAME}.txt to /base/zhprs_dict_${DATABASE_NAME}.txt(data don't have /base/${DATABASE_ID} when tablespace is setted)
+
 2.1 (2019-04-23)
 -- custom word store in DataDir.
 

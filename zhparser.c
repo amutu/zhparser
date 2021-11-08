@@ -212,8 +212,8 @@ static void init(){
 			 )));
 	}
 
-	snprintf(dict_path, MAXPGPATH, "%s/base/%u/zhprs_dict_%s.txt",
-			DataDir, MyDatabaseId, get_database_name(MyDatabaseId));
+	snprintf(dict_path, MAXPGPATH, "%s/base/zhprs_dict_%s.txt",
+			DataDir, get_database_name(MyDatabaseId));
 	if(scws_add_dict(scws, dict_path, load_dict_mem_mode | SCWS_XDICT_TXT) != 0 ){
 		ereport(NOTICE,
 			    (errcode(ERRCODE_INTERNAL_ERROR),
