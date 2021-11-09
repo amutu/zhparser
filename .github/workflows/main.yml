@@ -33,4 +33,8 @@ jobs:
       - name: Run a multi-line script
         run: |
           sudo apt-get -y install postgresql-12 postgresql-contrib-12 postgresql-server-dev-12
+          wget -q -O - http://www.xunsearch.com/scws/down/scws-1.2.3.tar.bz2 | tar xf -
+          cd scws-1.2.3 ; ./configure ; sudo make install
+          cd $GITHUB_WORKSPACE/zhparser ; make && make install
+          
           echo test, and deploy your project.
