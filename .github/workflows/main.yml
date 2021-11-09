@@ -40,6 +40,6 @@ jobs:
           env
           type pg_config
           cd $GITHUB_WORKSPACE
-          PG_CONFIG=/usr/lib/postgresql/12.0/bin/pg_config make && sudo make install
-          
+          pg_config
+          export PG_CONFIG=/usr/lib/postgresql/12.0/bin/pg_config ; make && sudo make install
           echo test, and deploy your project.
