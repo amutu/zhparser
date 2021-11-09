@@ -41,5 +41,5 @@ jobs:
           type pg_config
           cd $GITHUB_WORKSPACE
           pg_config
-          export PG_CONFIG=/usr/lib/postgresql/12/bin/pg_config ; make && sudo make install
+          # export PG_CONFIG=/usr/lib/postgresql/12/bin/pg_config ; make && sudo make install
           echo test, and deploy your project.
