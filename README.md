@@ -6,6 +6,8 @@ the [Simple Chinese Word Segmentation(SCWS)](https://github.com/hightman/scws).
 
 Project home page: http://blog.amutu.com/zhparser/
 
+**注意**：对于分词结果不满意的，或者需要调试分词结果的，可以在这个页面调试：http://www.xunsearch.com/scws/demo/v48.php
+
 INSTALL
 -------
 0.前置条件
