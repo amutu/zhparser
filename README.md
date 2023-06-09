@@ -41,6 +41,9 @@ zhparser支持PostgreSQL 9.2及以上版本，请确保你的PG版本符合要�
  make && make install
 
 ```
+
+如果scws的路径不在默认的 /usr/local 下,可以设置SCWS_HOME 例如： ` SCWS_HOME=/usr make && make install `
+
 如果你同时安装了多个版本的PostgreSQL, 可以通过指定 PG\_CONFIG 来为指定的版本编译扩展：
 
 ```
