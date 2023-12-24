@@ -41,6 +41,8 @@ you will get:
    118 | 启动  
 (14 行记录)  
 
+更多docker镜像信息，访问这里：[zhparser的dockerub](https://hub.docker.com/r/zhparser/zhparser)
+
 INSTALL
 -------
 0.前置条件
