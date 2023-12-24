@@ -8,6 +8,39 @@ Project home page: http://blog.amutu.com/zhparser/
 
 **注意**：对于分词结果不满意的，或者需要调试分词结果的，可以在这个页面调试：http://www.xunsearch.com/scws/demo/v48.php
 
+Docker快速体验
+-------
+run the container:  
+> docker run --name pgzhparser -d -e POSTGRES_PASSWORD=somepassword zhparser/zhparser:bookworm-16 
+
+login the postgres database as user postgres:  
+> docker exec -it pgzhparser psql postgres postgres
+
+create the extension and use it:  
+> CREATE EXTENSION zhparser;  
+> CREATE TEXT SEARCH CONFIGURATION testzhcfg (PARSER = zhparser);  
+> ALTER TEXT SEARCH CONFIGURATION testzhcfg ADD MAPPING FOR n,v,a,i,e,l WITH simple;  
+> postgres=# SELECT * FROM ts_parse('zhparser', 'hello world! 2010年保障房建设在全国范围内获全面启动');  
+
+you will get:  
+ tokid | token  
+-------+-------
+   101 | hello  
+   101 | world  
+   117 | !  
+   101 | 2010  
+   113 | 年  
+   118 | 保障  
+   110 | 房建  
+   118 | 设在  
+   110 | 全国  
+   110 | 范围  
+   102 | 内  
+   118 | 获  
+    97 | 全面  
+   118 | 启动  
+(14 行记录)  
+
 INSTALL
 -------
 0.前置条件
