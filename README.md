@@ -24,7 +24,7 @@ create the extension and use it:
 
 you will get:  
  tokid | token  
--------+-------
+-------+-------  
    101 | hello  
    101 | world  
    117 | !  
