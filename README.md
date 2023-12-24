@@ -20,7 +20,7 @@ create the extension and use it:
 > CREATE EXTENSION zhparser;  
 > CREATE TEXT SEARCH CONFIGURATION testzhcfg (PARSER = zhparser);  
 > ALTER TEXT SEARCH CONFIGURATION testzhcfg ADD MAPPING FOR n,v,a,i,e,l WITH simple;  
-> postgres=# SELECT * FROM ts_parse('zhparser', 'hello world! 2010年保障房建设在全国范围内获全面启动');  
+> SELECT * FROM ts_parse('zhparser', 'hello world! 2010年保障房建设在全国范围内获全面启动');  
 
 you will get:  
  tokid | token  
