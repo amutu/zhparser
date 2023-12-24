@@ -4,7 +4,7 @@ FROM docker.io/library/postgres:${PG_CONTAINER_VERSION}-bookworm as builder
 ARG DEBIAN_FRONTEND=noninteractive
 RUN set -ex \
   && apt-get update \
-  && apt-get install -y build-essential git postgresql-server-dev-${PG_MAJOR} pkg-config binutils libstdc++-12-dev automake libtool \
+  && apt-get install -y build-essential git postgresql-server-dev-${PG_MAJOR} pkg-config binutils automake libtool \
   && apt-get clean
 
 RUN set -ex \
