@@ -23,5 +23,4 @@ COPY --from=builder /usr/local/lib/postgresql/zhparser.so /usr/local/lib/postgre
 COPY --from=builder /usr/local/lib/libscws.* /usr/local/lib/
 COPY --from=builder /usr/local/share/postgresql/extension/zhparser* /usr/local/share/postgresql/extension/
 COPY --from=builder /usr/local/lib/postgresql/bitcode/zhparser* /usr/local/lib/postgresql/bitcode/
-COPY --from=builder /usr/local/share/postgresql/tsearch_data/dict.utf8.xdb /usr/local/share/postgresql/tsearch_data/
-COPY --from=builder /usr/local/share/postgresql/tsearch_data/rules.utf8.ini /usr/local/share/postgresql/tsearch_data/
+COPY --from=builder /usr/local/share/postgresql/tsearch_data/*.utf8.* /usr/local/share/postgresql/tsearch_data/

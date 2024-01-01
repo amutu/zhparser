@@ -25,8 +25,6 @@ ENV LANG zh_CN.UTF-8
 
 COPY --from=builder /usr/lib/postgresql/${PG_MAJOR}/lib/zhparser.so /usr/lib/postgresql/${PG_MAJOR}/lib/
 COPY --from=builder /usr/local/lib/libscws.* /usr/local/lib/
-RUN mkdir -p /usr/share/postgresql/${PG_MAJOR}/extension
 COPY --from=builder /usr/share/postgresql/${PG_MAJOR}/extension/zhparser* /usr/share/postgresql/${PG_MAJOR}/extension/
-RUN mkdir -p /usr/lib/postgresql/${PG_MAJOR}/lib/bitcode/zhparser
-COPY --from=builder /usr/lib/postgresql/${PG_MAJOR}/lib/bitcode/zhparser/zhparser.bc /usr/lib/postgresql/${PG_MAJOR}/lib/bitcode/zhparser/
-COPY --from=builder /usr/share/postgresql/${PG_MAJOR}/tsearch_data/dict.utf8.xdb /usr/share/postgresql/${PG_MAJOR}/tsearch_data/
+COPY --from=builder /usr/lib/postgresql/${PG_MAJOR}/lib/bitcode/zhparser* /usr/lib/postgresql/${PG_MAJOR}/lib/bitcode/
+COPY --from=builder /usr/share/postgresql/${PG_MAJOR}/tsearch_data/*.utf8.* /usr/share/postgresql/${PG_MAJOR}/tsearch_data/
