@@ -41,7 +41,8 @@ you will get:
    118 | 启动  
 (14 行记录)  
 
-更多docker镜像信息，访问这里：[zhparser的dockerub](https://hub.docker.com/r/zhparser/zhparser)
+更多docker镜像信息，访问这里：[zhparser的dockerub](https://hub.docker.com/r/zhparser/zhparser)  
+zhparser的docker镜像基于PostgreSQL的docker官方镜像构建，更多的用法参见：https://hub.docker.com/_/postgres
 
 INSTALL
 -------
