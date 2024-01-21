@@ -59,11 +59,12 @@ jobs:
         envs: 'MYTOKEN MYTOKEN2'
         usesh: true
         prepare: |
-          pkg install -y curl
+          pkg install -y scws
+          pkg install -y postgresql16-server
+          pkg install -y gmake
 
         run: |
-          pwd
-          ls -lah
-          whoami
           env
           freebsd-version
+          git clone https://github.com/amutu/zhparser.git
+          cd zhparser ; gmake
