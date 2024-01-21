@@ -62,6 +62,7 @@ jobs:
           pkg install -y scws
           pkg install -y postgresql16-server
           pkg install -y gmake
+          pkg install -y git
 
         run: |
           env
