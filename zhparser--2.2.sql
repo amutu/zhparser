@@ -33,7 +33,6 @@ CREATE TABLE zhparser.zhprs_custom_word(word text primary key, tf float default 
 CREATE FUNCTION sync_zhprs_custom_word() RETURNS void LANGUAGE plpgsql AS
 $$
 declare
-	database_oid text;
 	data_dir text;
 	dict_path text;
 	time_tag_path text;
@@ -51,4 +50,5 @@ begin
 end;
 $$;
 
-select sync_zhprs_custom_word();
+-- do not created custom dict files when fresh installed
+-- select sync_zhprs_custom_word();

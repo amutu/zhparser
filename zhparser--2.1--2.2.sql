@@ -18,4 +18,5 @@ begin
 end;
 $$;
 
-select sync_zhprs_custom_word();
+-- do not created custom dict files when fresh installed
+-- select sync_zhprs_custom_word();
