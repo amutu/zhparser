@@ -8,8 +8,8 @@ declare
 begin
 	select setting from pg_settings where name='data_directory' into data_dir;
 
-	select data_dir || '/base/' || '/zhprs_dict_' || current_database() || '.txt' into dict_path;
-	select data_dir || '/base/' || '/zhprs_dict_' || current_database() || '.tag' into time_tag_path;
+	select data_dir || '/base' || '/zhprs_dict_' || current_database() || '.txt' into dict_path;
+	select data_dir || '/base' || '/zhprs_dict_' || current_database() || '.tag' into time_tag_path;
 
 	query = 'copy (select word, tf, idf, attr from zhparser.zhprs_custom_word) to ' || chr(39) || dict_path || chr(39) || ' encoding ' || chr(39) || 'utf8' || chr(39) ;
 	execute query;
