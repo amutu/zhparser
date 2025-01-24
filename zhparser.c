@@ -260,9 +260,9 @@ static void init(){
 			sharepath, (char*)lfirst(l));
 		/* ignore error*/
 		if( scws_add_dict(scws,dict_path,load_dict_mode) != 0 ){
-		    ereport(NOTICE,
+		    ereport(LOG,
 			    (errcode(ERRCODE_INTERNAL_ERROR),
-			     errmsg("zhparser add dict : \"%s\" failed!",dict_path
+			     errmsg("zhparser add dict : \"%s\" failed for extra dict! omit",dict_path
 				 )));
 		}
 	    }
