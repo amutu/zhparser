@@ -1,0 +1,55 @@
+CREATE FUNCTION zhprs_start(internal, int4)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+
+CREATE FUNCTION zhprs_getlexeme(internal, internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+
+CREATE FUNCTION zhprs_end(internal)
+RETURNS void
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+
+CREATE FUNCTION zhprs_lextype(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+
+CREATE TEXT SEARCH PARSER zhparser (
+    START    = zhprs_start,
+    GETTOKEN = zhprs_getlexeme,
+    END      = zhprs_end,
+    HEADLINE = pg_catalog.prsd_headline,
+    LEXTYPES = zhprs_lextype
+);
+
+
+CREATE SCHEMA zhparser;
+CREATE TABLE zhparser.zhprs_custom_word(word text primary key, tf float default '1.0', 
+  idf float default '1.0', attr char default '@', check(attr = '@' or attr = '!'));
+
+CREATE FUNCTION sync_zhprs_custom_word() RETURNS void LANGUAGE plpgsql AS
+$$
+declare
+	data_dir text;
+	dict_path text;
+	time_tag_path text;
+	query text;
+begin
+	select setting from pg_settings where name='data_directory' into data_dir;
+
+	select data_dir || '/base' || '/zhprs_dict_' || current_database() || '.txt' into dict_path;
+	select data_dir || '/base' || '/zhprs_dict_' || current_database() || '.tag' into time_tag_path;
+
+	query = $q$copy (select word, tf, idf, attr from zhparser.zhprs_custom_word) to '$q$ || dict_path || $q$' encoding 'utf8' $q$;
+	execute query;
+	query = $q$copy (select now()) to '$q$  || time_tag_path || $q$'$q$;
+	execute query;
+end;
+$$;
+
+-- do not created custom dict files when fresh installed
+-- select sync_zhprs_custom_word();
