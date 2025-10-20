@@ -222,7 +222,7 @@ static void init(){
 	}
 
 	if(extra_dicts != NULL){
-	    if(!SplitIdentifierString(extra_dicts,',',&elemlist)){
+	    if(!SplitIdentifierString(pstrdup(extra_dicts),',',&elemlist)){
 		scws_free(scws);
 		list_free(elemlist);
 		scws = NULL;
