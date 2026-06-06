@@ -1,8 +1,8 @@
 {
    "name": "zhparser",
    "abstract": "a parser for full-text search of Chinese",
-   "description": "Zhparser is a PostgreSQL extension for full-text search of Chinese.It implements a Chinese parser base on the Simple Chinese Word Segmentation(SCWS)",
-   "version": "0.2.0",
+   "description": "Zhparser is a PostgreSQL extension for full-text search of Chinese. It implements a Chinese parser based on Simple Chinese Word Segmentation (SCWS).",
+   "version": "2.4.0",
    "maintainer": [
       "Jov <amutu@amutu.com>"
    ],
@@ -10,19 +10,16 @@
    "prereqs": {
       "runtime": {
          "requires": {
-            "PostgreSQL": "9.2.0"
-         },
-         "recommends": {
-            "PostgreSQL": "9.6.0"
+            "PostgreSQL": "16.0.0"
          }
       }
    },
    "provides": {
       "zhparser": {
          "abstract": "a parser for full-text search of Chinese",
-         "file": "zhparser--1.0.sql",
+         "file": "zhparser--2.4.sql",
          "docfile": "README.md",
-         "version": "0.2.0"
+         "version": "2.4.0"
       }
    },
    "resources": {

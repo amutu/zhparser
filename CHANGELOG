@@ -1,3 +1,32 @@
+2.4 (2026-06-06) -- security & robustness hardening
+-- per-call SCWS instance via scws_fork(); removed global ParserState (fixes
+   token corruption with SRFs / nested parser calls within one backend)
+-- _PG_init() now registers GUCs once at module load; init failures no longer
+   permanently break the backend
+-- whitelist validation for zhparser.extra_dicts entries (only [A-Za-z0-9_.-],
+   .txt or .xdb); rejected by check_hook
+-- refuse to write per-database custom dict files when current_database()
+   contains characters unsafe for filesystem paths
+-- sync_zhprs_custom_word() now builds COPY via format() / %L and validates
+   the database name (mitigates dynamic-SQL pitfalls)
+-- fix lexeme attr range: was ['a','x'] which silently dropped 'y' (modal)
+   and 'z' (status); now ['a','z']
+-- safer pstrdup namespace handling in zhparser.h (no longer permanently
+   shadows the PG macro)
+-- backup-custom-dict.sh: set -euo pipefail, dry-run, --yes confirmation,
+   safe globbing
+-- Makefile: pkg-config detection for SCWS, -Wformat-security
+-- new GitHub Actions matrix CI for PG 16/17/18
+-- new regress/ container (Dockerfile + entrypoint + wrapper) and
+   sql/zhparser_hardening.sql; pg_regress green on PG 16/17/18
+
+2.3 (2025-01-24)
+-- add CI for linux and freebsd
+-- do not create custom txt file when new install
+-- add dockerfile for debian and alpine
+-- fix linux CI, bump PG version to 16 for linux
+-- fix client notice "NOTICE: zhparser add dict..."
+
 2.2 (2021-11-08)
 -- move custom word from /base/${DATABASE_ID}/zhprs_dict_${DATABASE_NAME}.txt to /base/zhprs_dict_${DATABASE_NAME}.txt(data don't have /base/${DATABASE_ID} when tablespace is setted)
 
