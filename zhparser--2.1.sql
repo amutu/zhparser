@@ -46,9 +46,9 @@ begin
 	select data_dir || '/base/' || database_oid || '/zhprs_dict_' || current_database() || '.txt' into dict_path;
 	select data_dir || '/base/' || database_oid || '/zhprs_dict_' || current_database() || '.tag' into time_tag_path;
 
-	query = 'copy (select word, tf, idf, attr from zhparser.zhprs_custom_word) to ' || chr(39) || dict_path || chr(39) || ' encoding ' || chr(39) || 'utf8' || chr(39) ;
+	query = 'copy (select word, tf, idf, attr from zhparser.zhprs_custom_word) to ' || quote_literal(dict_path) || ' encoding ' || quote_literal('utf8');
 	execute query;
-	query = 'copy (select now()) to ' || chr(39) || time_tag_path || chr(39) ;
+	query = 'copy (select now()) to ' || quote_literal(time_tag_path);
 	execute query;
 end;
 $$;
