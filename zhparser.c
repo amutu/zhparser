@@ -17,7 +17,11 @@
 
 #include "fmgr.h"
 #include "miscadmin.h"
+#if PG_VERSION_NUM >= 190000
+#include "utils/lsyscache.h"
+#else 
 #include "commands/dbcommands.h"
+#endif
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
