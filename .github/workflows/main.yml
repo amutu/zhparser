@@ -32,7 +32,7 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
         run: |
-          sudo apt-get -y install postgresql-server-dev-16
+          sudo apt-get -y install postgresql-server-dev-18
           wget -q -O - http://www.xunsearch.com/scws/down/scws-1.2.3.tar.bz2 | tar jxf -
           cd scws-1.2.3 ; ./configure ; sudo make install
           cd $GITHUB_WORKSPACE
@@ -60,7 +60,7 @@ jobs:
         usesh: true
         prepare: |
           pkg install -y scws
-          pkg install -y postgresql16-server
+          pkg install -y postgresql17-server
           pkg install -y gmake
           pkg install -y git
 
